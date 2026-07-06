@@ -92,6 +92,13 @@ export default function Header() {
             </button>
           </div>
 
+          <Link 
+            href="/login" 
+            className="text-sm font-black text-slate-700 dark:text-slate-200 hover:text-[#8B5CF6] dark:hover:text-[#8B5CF6] transition-colors duration-200 tracking-wide"
+          >
+            {t('authLoginBtn')}
+          </Link>
+
           <a 
             href="#admission" 
             className="bg-gradient-to-r from-accentViolet to-accentCyan hover:opacity-90 text-white font-bold text-sm px-5 py-2.5 rounded-full shadow-[0_4px_15px_rgba(15,139,253,0.2)] transition-all duration-300"
@@ -211,6 +218,15 @@ export default function Header() {
                     </button>
                   </div>
                 </div>
+
+                {/* Login Button */}
+                <Link 
+                  href="/login" 
+                  onClick={() => setIsOpen(false)}
+                  className="w-full text-center py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold block text-sm tracking-wide hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                >
+                  {t('authLoginBtn')}
+                </Link>
 
                 {/* Admission Button */}
                 <a 

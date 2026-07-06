@@ -2,11 +2,10 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import CursorGlow from '@/components/ui/CursorGlow'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
-import FloatingWhatsApp from '@/components/ui/FloatingWhatsApp'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import { LanguageProvider } from '@/context/LanguageContext'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { AuthProvider } from '@/context/AuthContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -55,13 +54,12 @@ export default function RootLayout({
       <body className={`${inter.className} bg-slate-50 text-slate-900 dark:bg-darkObsidian dark:text-white antialiased selection:bg-accentViolet/20 selection:text-accentViolet min-h-screen flex flex-col transition-colors duration-300`}>
         <ThemeProvider>
           <LanguageProvider>
-            <CursorGlow />
-            <Header />
-            <main className="flex-grow">
-              {children}
-            </main>
-            <FloatingWhatsApp />
-            <Footer />
+            <AuthProvider>
+              <CursorGlow />
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>

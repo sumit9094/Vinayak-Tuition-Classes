@@ -1,0 +1,218 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { User, Mail, Phone, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import AuthCard from '@/components/auth/AuthCard';
+import FormInput from '@/components/auth/FormInput';
+import PasswordInput from '@/components/auth/PasswordInput';
+import SubmitButton from '@/components/auth/SubmitButton';
+
+export default function RegisterPage() {
+  const { t } = useLanguage();
+  const { register } = useAuth();
+  const router = useRouter();
+
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    role: 'Admin',
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    
+    // Custom phone input handling to only allow digits and max 10 chars
+    if (name === 'phone') {
+      const numericValue = value.replace(/\D/g, '');
+      if (numericValue.length <= 10) {
+        setFormData((prev) => ({ ...prev, [name]: numericValue }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
+
+    // Clear error for field on type
+    if (errors[name]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
+    }
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Name check
+    if (formData.fullName.trim().length < 3) {
+      newErrors.fullName = t('authNameErr');
+    }
+
+    // Email check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      newErrors.email = t('authEmailErr');
+    }
+
+    // Phone check (10 digits standard Indian mobile check starting with 6-9)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone = t('authPhoneErr');
+    }
+
+    // Password check (min 8 chars, 1 uppercase, 1 number)
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+      newErrors.password = t('authPasswordValidationErr');
+    }
+
+    // Confirm password check
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = t('authConfirmPasswordErr');
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const success = await register(formData);
+      if (success) {
+        // Redirect to login page with query param to trigger success toast
+        router.push('/login?registered=true');
+      }
+    } catch (err) {
+      console.error('Registration failed:', err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const roleOptions = [
+    { value: 'Admin', label: t('authRoleAdmin') },
+    { value: 'Teacher', label: t('authRoleTeacher') },
+  ];
+
+  return (
+    <AuthCard title={t('authRegisterTitle')}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Full Name */}
+        <FormInput
+          label={t('authFullNameLabel')}
+          name="fullName"
+          type="text"
+          value={formData.fullName}
+          onChange={handleChange}
+          placeholder={t('authFullNamePlaceholder')}
+          icon={User}
+          error={errors.fullName}
+          required
+          disabled={submitting}
+        />
+
+        {/* Email */}
+        <FormInput
+          label={t('authEmailLabel')}
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          placeholder={t('authEmailPlaceholder')}
+          icon={Mail}
+          error={errors.email}
+          required
+          disabled={submitting}
+          autoComplete="email"
+        />
+
+        {/* Phone Number */}
+        <FormInput
+          label={t('authPhoneLabel')}
+          name="phone"
+          type="tel"
+          value={formData.phone}
+          onChange={handleChange}
+          placeholder={t('authPhonePlaceholder')}
+          icon={Phone}
+          error={errors.phone}
+          required
+          disabled={submitting}
+          autoComplete="tel"
+        />
+
+        {/* Password */}
+        <PasswordInput
+          label={t('authPasswordLabel')}
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          placeholder={t('authPasswordPlaceholder')}
+          error={errors.password}
+          required
+          disabled={submitting}
+        />
+
+        {/* Confirm Password */}
+        <PasswordInput
+          label={t('authConfirmPasswordLabel')}
+          name="confirmPassword"
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          placeholder={t('authConfirmPasswordPlaceholder')}
+          error={errors.confirmPassword}
+          required
+          disabled={submitting}
+        />
+
+        {/* Role Selection */}
+        <FormInput
+          label={t('authRoleLabel')}
+          name="role"
+          type="select"
+          value={formData.role}
+          onChange={handleChange}
+          options={roleOptions}
+          icon={ShieldCheck}
+          required
+          disabled={submitting}
+        />
+
+        {/* Submit Button */}
+        <div className="pt-2">
+          <SubmitButton isLoading={submitting} loadingText={t('authSubmitting')}>
+            {t('authCreateAccountBtn')}
+          </SubmitButton>
+        </div>
+
+        {/* Login Link */}
+        <div className="text-center mt-6">
+          <Link
+            href="/login"
+            className="text-xs font-bold text-slate-500 hover:text-[#8B5CF6] dark:text-slate-400 dark:hover:text-[#8B5CF6] transition-colors"
+          >
+            {t('authAlreadyAccount')}
+          </Link>
+        </div>
+      </form>
+    </AuthCard>
+  );
+}
