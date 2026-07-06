@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { Globe, Menu, X, Sun, Moon } from 'lucide-react';
+import { Globe, Menu, X, Sun, Moon, User } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
@@ -94,9 +94,10 @@ export default function Header() {
 
           <Link 
             href="/login" 
-            className="text-sm font-black text-slate-700 dark:text-slate-200 hover:text-[#8B5CF6] dark:hover:text-[#8B5CF6] transition-colors duration-200 tracking-wide"
+            className="p-2 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+            aria-label="Portal Login"
           >
-            {t('authLoginBtn')}
+            <User className="w-4 h-4" />
           </Link>
 
           <a 
@@ -128,6 +129,14 @@ export default function Header() {
               <span>{language === 'EN' ? 'GJ' : 'EN'}</span>
             </button>
           </div>
+
+          <Link 
+            href="/login" 
+            className="p-1.5 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+            aria-label="Portal Login"
+          >
+            <User className="w-4 h-4" />
+          </Link>
 
           <button 
             onClick={() => setIsOpen(!isOpen)} 
