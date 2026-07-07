@@ -75,15 +75,6 @@ export default function Header() {
           setIsInstalling(false);
           setShowSuccessToast(true);
           setShowInstallBtn(false);
-
-          // Trigger native install prompt if available at the end of progress
-          if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(({ outcome }: any) => {
-              console.log(`PWA prompt outcome: ${outcome}`);
-              setDeferredPrompt(null);
-            });
-          }
           
           setTimeout(() => {
             setShowSuccessToast(false);
@@ -102,8 +93,21 @@ export default function Header() {
       // iPhone/iOS: show guide modal directly (no direct progress animation)
       setShowModal(true);
     } else {
-      // Android/Desktop: run 0% to 100% animation directly
-      startProgress();
+      // Android/Desktop: prompt native install first
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`PWA prompt outcome: ${outcome}`);
+        
+        // If user accepts the prompt, start the 0-100% progress animation
+        if (outcome === 'accepted') {
+          setDeferredPrompt(null);
+          startProgress();
+        }
+      } else {
+        // Fallback: if native prompt event hasn't fired yet, run simulation directly
+        startProgress();
+      }
     }
   };
 
