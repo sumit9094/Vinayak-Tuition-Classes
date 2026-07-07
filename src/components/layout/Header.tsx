@@ -75,6 +75,15 @@ export default function Header() {
           setIsInstalling(false);
           setShowSuccessToast(true);
           setShowInstallBtn(false);
+
+          // Trigger native install prompt if available at the end of progress
+          if (deferredPrompt) {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(({ outcome }: any) => {
+              console.log(`PWA prompt outcome: ${outcome}`);
+              setDeferredPrompt(null);
+            });
+          }
           
           setTimeout(() => {
             setShowSuccessToast(false);
@@ -89,16 +98,12 @@ export default function Header() {
   };
 
   const handleInstallClick = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`PWA prompt outcome: ${outcome}`);
-      if (outcome === 'accepted') {
-        setDeferredPrompt(null);
-        startProgress();
-      }
-    } else {
+    if (platform === 'ios') {
+      // iPhone/iOS: show guide modal directly (no direct progress animation)
       setShowModal(true);
+    } else {
+      // Android/Desktop: run 0% to 100% animation directly
+      startProgress();
     }
   };
 
