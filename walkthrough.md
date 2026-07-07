@@ -1,6 +1,6 @@
-# Walkthrough - Vinayak Tuition Auth Pages & Persistent Login Icon
+# Walkthrough - Vinayak Tuition Auth Pages, Login Icon & PWA Install Button
 
-We have successfully implemented the Register and Login flows, and added a persistent Login Icon button in the top navigation header. The application builds cleanly and supports full English/Gujarati switching.
+We have successfully implemented the Register and Login flows, added a persistent Login Icon button, and integrated a smart PWA "Install App" button in the top navigation header. The application builds cleanly and supports full English/Gujarati switching.
 
 ## Changes Made
 
@@ -21,20 +21,34 @@ All shared components are created under `src/components/auth/`:
 - **[PasswordInput.tsx](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/components/auth/PasswordInput.tsx)**: Password input with built-in show/hide visibility toggle and pattern validation.
 - **[SubmitButton.tsx](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/components/auth/SubmitButton.tsx)**: Primary button styled with the purple theme (`#8B5CF6`), displaying loading spinners.
 
-### 4. Navigation Header Button
+### 4. Navigation Header Custom Controls
 - **File modified**: [Header.tsx](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/components/layout/Header.tsx)
   - Added a persistent **Login Icon Button** on the top-right navigation area (positioned before the mobile hamburger menu icon and right next to the dark-mode toggle/language badge).
-  - Shape: Circular button, matching the size of the existing dark-mode toggle button.
-  - Background color: `#8B5CF6` (purple) with a white outline user icon.
-  - Visible across all screen sizes (mobile, tablet, desktop).
+    - Shape: Circular button, matching the size of the existing dark-mode toggle button.
+    - Background color: `#8B5CF6` (purple) with a white outline user icon.
+    - Visible across all screen sizes (mobile, tablet, desktop).
+  - Added a smart PWA **"Install App" Button** on the top-right navigation area positioned before the Login icon:
+    - Shape: Circular button, matching the size of the login icon and dark-mode toggle.
+    - Background color: `#3B82F6` (blue) with a white outline download icon.
+    - Order of mobile header elements: `[Dark mode toggle] [Language GJ badge] [📲 Install icon] [👤 Login icon] [☰ Menu]`
 
-### 5. Auth State Provider
+### 5. PWA Installation Behavior
+- Implemented state tracking for the `beforeinstallprompt` event.
+- If the PWA is already installed or runs in `standalone` mode, the Install icon button is automatically hidden.
+- If the browser supports native installation (Android Chrome/Edge), clicking the icon prompts the browser's native PWA installation popup.
+- If the browser does not support it (iOS Safari), clicking the icon launches a beautiful animated guide modal providing step-by-step instructions:
+  1. Tap the Share icon at the bottom of Safari (<kbd>Share icon</kbd>).
+  2. Scroll down and select "Add to Home Screen".
+  3. Tap "Add" in the top-right corner to complete.
+- Listens to the `appinstalled` event to automatically hide the install icon button forever once installed.
+
+### 6. Auth State Provider
 - **File created**: [AuthContext.tsx](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/context/AuthContext.tsx)
   - Manages client-side sessions using `sessionStorage`.
   - Simulates API network delay (1.5 seconds) for registration and login requests.
   - Logs payload details in console and simulates validation failures.
 
-### 6. Application Screens
+### 7. Application Screens
 - **[Register Page](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/app/register/page.tsx)**: Fully functional client-side form validating full name, valid email structure, 10-digit phone format, complex passwords (min 8 chars, 1 uppercase, 1 digit), and password matching. Redirects to login with a success toast trigger.
 - **[Login Page](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/app/login/page.tsx)**: Validates input fields. Shows success toast after registration and handles invalid credentials banner (specifically fails if using `fail@vinayak.com`). Redirects to the dashboard on successful validation.
 - **[Forgot Password Page](file:///c:/Users/Admin/Desktop/Vinayak%20Tuition%20Classes/src/app/forgot-password/page.tsx)**: Beautiful stub placeholder with link back to login.

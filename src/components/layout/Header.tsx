@@ -15,6 +15,7 @@ export default function Header() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [platform, setPlatform] = useState<'ios' | 'other'>('other');
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -25,6 +26,9 @@ export default function Header() {
       if (isStandalone) {
         setShowInstallBtn(false);
         return;
+      } else {
+        // Show install button by default on mount if not standalone
+        setShowInstallBtn(true);
       }
 
       // 2. Handler for beforeinstallprompt event
@@ -44,12 +48,9 @@ export default function Header() {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.addEventListener('appinstalled', handleAppInstalled);
 
-      // 4. iOS Safari Check: iOS Safari doesn't support beforeinstallprompt.
-      // We manually detect iOS and show the install button if not standalone.
+      // 4. Platform check for custom guide
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-      if (isIOS && !isStandalone) {
-        setShowInstallBtn(true);
-      }
+      setPlatform(isIOS ? 'ios' : 'other');
 
       return () => {
         window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -373,41 +374,75 @@ export default function Header() {
 
                 {/* Step instructions */}
                 <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-150 dark:border-slate-900 rounded-2xl p-4 text-left space-y-3">
-                  <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
-                      1
-                    </div>
-                    <p className="leading-5">
-                      {language === 'EN' 
-                        ? 'Tap the Share button at the bottom of Safari.' 
-                        : 'સફારી બ્રાઉઝરના તળિયે આપેલ શેર આઇકોન પર ટેપ કરો.'}
-                      <span className="inline-flex items-center align-middle ml-1.5 p-1 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded shadow-sm text-slate-550 dark:text-slate-400">
-                        <Share className="w-3.5 h-3.5" />
-                      </span>
-                    </p>
-                  </div>
+                  {platform === 'ios' ? (
+                    <>
+                      <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                          1
+                        </div>
+                        <p className="leading-5">
+                          {language === 'EN' 
+                            ? 'Tap the Share button at the bottom of Safari.' 
+                            : 'સફારી બ્રાઉઝરના તળિયે આપેલ શેર આઇકોન પર ટેપ કરો.'}
+                          <span className="inline-flex items-center align-middle ml-1.5 p-1 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded shadow-sm text-slate-550 dark:text-slate-400">
+                            <Share className="w-3.5 h-3.5" />
+                          </span>
+                        </p>
+                      </div>
 
-                  <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
-                      2
-                    </div>
-                    <p className="leading-5">
-                      {language === 'EN' 
-                        ? 'Scroll down and select "Add to Home Screen".' 
-                        : 'નીચે સ્ક્રોલ કરો અને "Add to Home Screen" પસંદ કરો.'}
-                    </p>
-                  </div>
+                      <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-355">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                          2
+                        </div>
+                        <p className="leading-5">
+                          {language === 'EN' 
+                            ? 'Scroll down and select "Add to Home Screen".' 
+                            : 'નીચે સ્ક્રોલ કરો અને "Add to Home Screen" પસંદ કરો.'}
+                        </p>
+                      </div>
 
-                  <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
-                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
-                      3
-                    </div>
-                    <p className="leading-5">
-                      {language === 'EN' 
-                        ? 'Tap "Add" in the top-right corner to complete.' 
-                        : 'પૂર્ણ કરવા માટે ઉપર જમણા ખૂણામાં "Add" પર ટેપ કરો.'}
-                    </p>
-                  </div>
+                      <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-355">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                          3
+                        </div>
+                        <p className="leading-5">
+                          {language === 'EN' 
+                            ? 'Tap "Add" in the top-right corner to complete.' 
+                            : 'પૂર્ણ કરવા માટે ઉપર જમણા ખૂણામાં "Add" પર ટેપ કરો.'}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-355">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                          A
+                        </div>
+                        <div className="leading-5">
+                          <strong className="text-slate-900 dark:text-white">{language === 'EN' ? 'On Mobile:' : 'મોબાઇલ પર:'}</strong>
+                          <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                            {language === 'EN' 
+                              ? 'Tap the browser menu icon (3 dots) and select "Install app" or "Add to Home screen".'
+                              : 'બ્રાઉઝર મેનૂ આઇકોન (3 બિંદુઓ) પર ટેપ કરો અને "Install app" અથવા "Add to Home screen" પસંદ કરો.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-355">
+                        <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                          B
+                        </div>
+                        <div className="leading-5">
+                          <strong className="text-slate-900 dark:text-white">{language === 'EN' ? 'On Desktop:' : 'ડેસ્કટોપ પર:'}</strong>
+                          <p className="mt-0.5 text-slate-500 dark:text-slate-400">
+                            {language === 'EN' 
+                              ? 'Click the install icon (monitor with down arrow) inside the browser address bar at the top-right.'
+                              : 'જમણી બાજુએ બ્રાઉઝર સરનામાં બારની અંદર ઇન્સ્ટોલ આઇકોન (મોનિટર અને ડાઉન એરો) પર ક્લિક કરો.'}
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <button
