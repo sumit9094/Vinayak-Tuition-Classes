@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { Globe, Menu, X, Sun, Moon, User } from 'lucide-react';
+import { Globe, Menu, X, Sun, Moon, User, Download, Share } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
@@ -12,6 +12,65 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // 1. Check if already installed / running in standalone mode
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           (window.navigator as any).standalone === true;
+      
+      if (isStandalone) {
+        setShowInstallBtn(false);
+        return;
+      }
+
+      // 2. Handler for beforeinstallprompt event
+      const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        setShowInstallBtn(true);
+      };
+
+      // 3. Handler for appinstalled event
+      const handleAppInstalled = () => {
+        setDeferredPrompt(null);
+        setShowInstallBtn(false);
+        console.log('Vinayak Tuition PWA installed successfully');
+      };
+
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.addEventListener('appinstalled', handleAppInstalled);
+
+      // 4. iOS Safari Check: iOS Safari doesn't support beforeinstallprompt.
+      // We manually detect iOS and show the install button if not standalone.
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      if (isIOS && !isStandalone) {
+        setShowInstallBtn(true);
+      }
+
+      return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+      };
+    }
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA prompt outcome: ${outcome}`);
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setShowInstallBtn(false);
+      }
+    } else {
+      setShowModal(true);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,6 +151,17 @@ export default function Header() {
             </button>
           </div>
 
+          {/* Install App Button for Desktop */}
+          {showInstallBtn && (
+            <button
+              onClick={handleInstallClick}
+              className="p-2 rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+              aria-label="Install App"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          )}
+
           <Link 
             href="/login" 
             className="p-2 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
@@ -129,6 +199,17 @@ export default function Header() {
               <span>{language === 'EN' ? 'GJ' : 'EN'}</span>
             </button>
           </div>
+
+          {/* Install App Button for Mobile */}
+          {showInstallBtn && (
+            <button
+              onClick={handleInstallClick}
+              className="p-1.5 rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+              aria-label="Install App"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          )}
 
           <Link 
             href="/login" 
@@ -248,6 +329,97 @@ export default function Header() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* iOS Installation Instructions Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowModal(false)}
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+            />
+
+            {/* Modal Card */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ type: 'spring', duration: 0.3 }}
+              className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden z-10"
+            >
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#3B82F6]/10 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div className="text-center space-y-4">
+                {/* Icon */}
+                <div className="w-12 h-12 bg-[#3B82F6]/10 text-[#3B82F6] rounded-full flex items-center justify-center mx-auto border border-[#3B82F6]/20">
+                  <Download className="w-5 h-5" />
+                </div>
+
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                  {language === 'EN' ? 'Install Vinayak Tuition' : 'વિનાયક ટ્યુશન ડાઉનલોડ કરો'}
+                </h3>
+
+                <p className="text-xs text-slate-500 dark:text-slate-405 font-medium leading-relaxed">
+                  {language === 'EN' 
+                    ? 'Add this application to your home screen for quick access and offline features.'
+                    : 'ઝડપી ઍક્સેસ અને ઑફલાઇન વિશેષતાઓ માટે આ એપ્લિકેશનને તમારા હોમ સ્ક્રીન પર ઉમેરો.'}
+                </p>
+
+                {/* Step instructions */}
+                <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-150 dark:border-slate-900 rounded-2xl p-4 text-left space-y-3">
+                  <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                      1
+                    </div>
+                    <p className="leading-5">
+                      {language === 'EN' 
+                        ? 'Tap the Share button at the bottom of Safari.' 
+                        : 'સફારી બ્રાઉઝરના તળિયે આપેલ શેર આઇકોન પર ટેપ કરો.'}
+                      <span className="inline-flex items-center align-middle ml-1.5 p-1 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded shadow-sm text-slate-550 dark:text-slate-400">
+                        <Share className="w-3.5 h-3.5" />
+                      </span>
+                    </p>
+                  </div>
+
+                  <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                      2
+                    </div>
+                    <p className="leading-5">
+                      {language === 'EN' 
+                        ? 'Scroll down and select "Add to Home Screen".' 
+                        : 'નીચે સ્ક્રોલ કરો અને "Add to Home Screen" પસંદ કરો.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-start space-x-3 text-xs font-semibold text-slate-700 dark:text-slate-350">
+                    <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[#3B82F6] text-white text-[10px] font-black shrink-0 mt-0.5">
+                      3
+                    </div>
+                    <p className="leading-5">
+                      {language === 'EN' 
+                        ? 'Tap "Add" in the top-right corner to complete.' 
+                        : 'પૂર્ણ કરવા માટે ઉપર જમણા ખૂણામાં "Add" પર ટેપ કરો.'}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-[0.98] outline-none"
+                >
+                  {language === 'EN' ? 'Got It' : 'સમજાઈ ગયું'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </header>
