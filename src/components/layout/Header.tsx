@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { Globe, Menu, X, Sun, Moon, User, Download, Share } from 'lucide-react';
+import { Globe, Menu, X, Sun, Moon, User, Download, Share, Check } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
@@ -17,6 +17,11 @@ export default function Header() {
   const [showModal, setShowModal] = useState(false);
   const [platform, setPlatform] = useState<'ios' | 'other'>('other');
 
+  // Installation animation states
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // 1. Check if already installed / running in standalone mode
@@ -27,7 +32,7 @@ export default function Header() {
         setShowInstallBtn(false);
         return;
       } else {
-        // Show install button by default on mount if not standalone
+        // Show by default on mount if not standalone
         setShowInstallBtn(true);
       }
 
@@ -59,6 +64,30 @@ export default function Header() {
     }
   }, []);
 
+  const startProgress = () => {
+    setIsInstalling(true);
+    setProgress(0);
+    
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsInstalling(false);
+          setShowSuccessToast(true);
+          setShowInstallBtn(false);
+          
+          setTimeout(() => {
+            setShowSuccessToast(false);
+          }, 4000);
+
+          return 100;
+        }
+        const next = prev + Math.floor(Math.random() * 8) + 4;
+        return next > 100 ? 100 : next;
+      });
+    }, 120);
+  };
+
   const handleInstallClick = async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
@@ -66,7 +95,7 @@ export default function Header() {
       console.log(`PWA prompt outcome: ${outcome}`);
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
-        setShowInstallBtn(false);
+        startProgress();
       }
     } else {
       setShowModal(true);
@@ -154,13 +183,44 @@ export default function Header() {
 
           {/* Install App Button for Desktop */}
           {showInstallBtn && (
-            <button
-              onClick={handleInstallClick}
-              className="p-2 rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
-              aria-label="Install App"
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center">
+              {isInstalling && (
+                <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-10" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    stroke="rgba(59, 130, 246, 0.15)"
+                    strokeWidth="6"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    stroke="#3B82F6"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray="276"
+                    strokeDashoffset={276 - (276 * progress) / 100}
+                    strokeLinecap="round"
+                    className="transition-all duration-75 ease-out"
+                  />
+                </svg>
+              )}
+              <button
+                onClick={handleInstallClick}
+                disabled={isInstalling}
+                className="w-full h-full rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm disabled:opacity-100"
+                aria-label="Install App"
+              >
+                {isInstalling ? (
+                  <span className="text-[10px] font-black text-white">{progress}%</span>
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           )}
 
           <Link 
@@ -203,13 +263,44 @@ export default function Header() {
 
           {/* Install App Button for Mobile */}
           {showInstallBtn && (
-            <button
-              onClick={handleInstallClick}
-              className="p-1.5 rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
-              aria-label="Install App"
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              {isInstalling && (
+                <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-10" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    stroke="rgba(59, 130, 246, 0.15)"
+                    strokeWidth="6"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="44"
+                    stroke="#3B82F6"
+                    strokeWidth="8"
+                    fill="transparent"
+                    strokeDasharray="276"
+                    strokeDashoffset={276 - (276 * progress) / 100}
+                    strokeLinecap="round"
+                    className="transition-all duration-75 ease-out"
+                  />
+                </svg>
+              )}
+              <button
+                onClick={handleInstallClick}
+                disabled={isInstalling}
+                className="w-full h-full rounded-full bg-[#3B82F6] hover:bg-[#2563EB] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm disabled:opacity-100"
+                aria-label="Install App"
+              >
+                {isInstalling ? (
+                  <span className="text-[10px] font-black text-white">{progress}%</span>
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           )}
 
           <Link 
@@ -333,7 +424,7 @@ export default function Header() {
         )}
       </AnimatePresence>
 
-      {/* iOS Installation Instructions Modal */}
+      {/* iOS/Unsupported Installation Instructions Modal */}
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -445,13 +536,26 @@ export default function Header() {
                   )}
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-[0.98] outline-none"
-                >
-                  {language === 'EN' ? 'Got It' : 'સમજાઈ ગયું'}
-                </button>
+                <div className="pt-2 flex flex-col space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="w-full py-2.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-bold rounded-xl shadow-md transition-all active:scale-[0.98] outline-none"
+                  >
+                    {language === 'EN' ? 'Got It' : 'સમજાઈ ગયું'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowModal(false);
+                      startProgress();
+                    }}
+                    className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-extrabold rounded-xl transition-all"
+                  >
+                    {language === 'EN' ? 'Simulate Download (for testing)' : 'ડાઉનલોડ ટેસ્ટ કરો (ચકાસણી માટે)'}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </div>
