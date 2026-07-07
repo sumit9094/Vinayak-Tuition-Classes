@@ -71,8 +71,9 @@ export default function Header() {
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.addEventListener('appinstalled', handleAppInstalled);
 
-      // 4. Platform check for custom guide
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+      // 4. Platform check for custom guide (supports ?platform=ios override for testing)
+      const isIOS = (/iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream) ||
+                    window.location.search.includes('platform=ios');
       setPlatform(isIOS ? 'ios' : 'other');
 
       return () => {
