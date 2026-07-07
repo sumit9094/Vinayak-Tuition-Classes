@@ -24,6 +24,16 @@ export default function Header() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Check if we just completed installation (for PWA window launch handoff)
+      const justInstalled = localStorage.getItem('pwa_just_installed');
+      if (justInstalled === 'true') {
+        localStorage.removeItem('pwa_just_installed');
+        setShowSuccessToast(true);
+        setTimeout(() => {
+          setShowSuccessToast(false);
+        }, 4000);
+      }
+
       // 1. Check if already installed / running in standalone mode
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                            (window.navigator as any).standalone === true;
@@ -48,6 +58,14 @@ export default function Header() {
         setDeferredPrompt(null);
         setShowInstallBtn(false);
         console.log('Vinayak Tuition PWA installed successfully');
+        
+        // Store flag for standalone app first-load success toast
+        localStorage.setItem('pwa_just_installed', 'true');
+        
+        setShowSuccessToast(true);
+        setTimeout(() => {
+          setShowSuccessToast(false);
+        }, 4000);
       };
 
       window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -99,13 +117,15 @@ export default function Header() {
         const { outcome } = await deferredPrompt.userChoice;
         console.log(`PWA prompt outcome: ${outcome}`);
         
-        // If user accepts the prompt, start the 0-100% progress animation
+        // If user accepts the prompt, start progress animation and save flag
         if (outcome === 'accepted') {
           setDeferredPrompt(null);
+          localStorage.setItem('pwa_just_installed', 'true');
           startProgress();
         }
       } else {
         // Fallback: if native prompt event hasn't fired yet, run simulation directly
+        localStorage.setItem('pwa_just_installed', 'true');
         startProgress();
       }
     }
