@@ -3,29 +3,28 @@
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LogOut, Sun, Moon, Globe, Shield } from 'lucide-react';
+import { LogOut, Sun, Moon, Globe, Briefcase } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function TeacherLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isLoading } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && (!user || user.type !== 'staff' || user.role !== 'admin')) {
+    if (!isLoading && (!user || user.type !== 'staff' || (user.role !== 'teacher' && user.role !== 'admin'))) {
       router.push('/login');
     }
   }, [user, isLoading, router]);
 
-  // Render a full-page loading spinner while verification is happening
-  if (isLoading || !user || user.type !== 'staff' || user.role !== 'admin') {
+  if (isLoading || !user || user.type !== 'staff' || (user.role !== 'teacher' && user.role !== 'admin')) {
     return (
       <div className="min-h-screen w-full flex flex-col justify-center items-center bg-slate-50 dark:bg-darkObsidian transition-colors duration-300">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#8B5CF6]"></div>
-        <p className="mt-4 text-xs font-semibold text-slate-500 dark:text-slate-400 font-mono">Verifying admin session...</p>
+        <p className="mt-4 text-xs font-semibold text-slate-500 dark:text-slate-400">Verifying teacher session...</p>
       </div>
     );
   }
@@ -37,10 +36,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-darkObsidian dark:text-white transition-colors duration-300">
-      {/* Protected Dashboard Header */}
+      {/* Teacher Portal Header */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-850 py-4 shadow-sm">
         <div className="container mx-auto px-6 flex justify-between items-center">
-          {/* Logo / Brand Name */}
+          {/* Logo / Brand */}
           <Link href="/" className="flex items-center space-x-2 group">
             <div>
               <span className="text-lg font-black text-slate-900 dark:text-white tracking-tight block">VINAYAK</span>
@@ -49,8 +48,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </span>
             </div>
             <div className="bg-[#8B5CF6]/10 text-[#8B5CF6] text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center border border-[#8B5CF6]/20">
-              <Shield className="w-2.5 h-2.5 mr-1" />
-              Admin Portal
+              <Briefcase className="w-2.5 h-2.5 mr-1" />
+              Teacher Workspace
             </div>
           </Link>
 
@@ -86,9 +85,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
             </button>
 
-            {/* User display & Sign Out */}
+            {/* User Details & Logout */}
             <span className="hidden sm:inline-block text-xs font-bold text-slate-600 dark:text-slate-300 px-2 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-              {user?.name} ({user?.role})
+              {user?.name} ({user?.subject})
             </span>
 
             <button
@@ -102,7 +101,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </header>
 
-      {/* Main Content Area */}
+      {/* Teacher Layout Children */}
       <main className="flex-grow flex flex-col">
         {children}
       </main>

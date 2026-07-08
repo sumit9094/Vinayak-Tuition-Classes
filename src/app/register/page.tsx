@@ -3,17 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { User, Mail, Phone, ShieldCheck } from 'lucide-react';
+import { User, Mail, Phone, BookOpen, MapPin, AlertCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAuth } from '@/context/AuthContext';
 import AuthCard from '@/components/auth/AuthCard';
 import FormInput from '@/components/auth/FormInput';
 import PasswordInput from '@/components/auth/PasswordInput';
 import SubmitButton from '@/components/auth/SubmitButton';
 
 export default function RegisterPage() {
-  const { t } = useLanguage();
-  const { register } = useAuth();
+  const { language, t } = useLanguage();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -22,11 +20,13 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'Admin',
+    branch: 'VINAYAK 1 SHIVAM',
+    standard: '9',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -48,6 +48,11 @@ export default function RegisterPage() {
         delete next[name];
         return next;
       });
+    }
+
+    // Clear error banner on type
+    if (errorBanner) {
+      setErrorBanner(null);
     }
   };
 
@@ -94,27 +99,55 @@ export default function RegisterPage() {
     }
 
     setSubmitting(true);
+    setErrorBanner(null);
     try {
-      const success = await register(formData);
-      if (success) {
+      const response = await fetch('/api/students/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
         // Redirect to login page with query param to trigger success toast
         router.push('/login?registered=true');
+      } else {
+        setErrorBanner(data.error || 'Registration failed');
       }
     } catch (err) {
       console.error('Registration failed:', err);
+      setErrorBanner('Network error. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const roleOptions = [
-    { value: 'Admin', label: t('authRoleAdmin') },
-    { value: 'Teacher', label: t('authRoleTeacher') },
+  const branchOptions = [
+    { value: 'VINAYAK 1 SHIVAM', label: 'VINAYAK 1 SHIVAM' },
+    { value: 'VINAYAK 2 RAILWAY EAST', label: 'VINAYAK 2 RAILWAY EAST' },
+  ];
+
+  const standardOptions = [
+    { value: '9', label: language === 'EN' ? 'Std. 9' : 'ધોરણ ૯' },
+    { value: '10', label: language === 'EN' ? 'Std. 10' : 'ધોરણ ૧૦' },
+    { value: '11', label: language === 'EN' ? 'Std. 11 Commerce' : 'ધોરણ ૧૧ કોમર્સ' },
+    { value: '12', label: language === 'EN' ? 'Std. 12 Commerce' : 'ધોરણ ૧૨ કોમર્સ' },
   ];
 
   return (
     <AuthCard title={t('authRegisterTitle')}>
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Error Notification Banner */}
+        {errorBanner && (
+          <div className="flex items-center space-x-2 p-3.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold animate-fadeIn">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>{errorBanner}</span>
+          </div>
+        )}
+
         {/* Full Name */}
         <FormInput
           label={t('authFullNameLabel')}
@@ -159,6 +192,32 @@ export default function RegisterPage() {
           autoComplete="tel"
         />
 
+        {/* Branch Selection */}
+        <FormInput
+          label={language === 'EN' ? 'Select Branch' : 'શાખા પસંદ કરો'}
+          name="branch"
+          type="select"
+          value={formData.branch}
+          onChange={handleChange}
+          options={branchOptions}
+          icon={MapPin}
+          required
+          disabled={submitting}
+        />
+
+        {/* Standard Selection */}
+        <FormInput
+          label={language === 'EN' ? 'Select Standard' : 'ધોરણ પસંદ કરો'}
+          name="standard"
+          type="select"
+          value={formData.standard}
+          onChange={handleChange}
+          options={standardOptions}
+          icon={BookOpen}
+          required
+          disabled={submitting}
+        />
+
         {/* Password */}
         <PasswordInput
           label={t('authPasswordLabel')}
@@ -179,19 +238,6 @@ export default function RegisterPage() {
           onChange={handleChange}
           placeholder={t('authConfirmPasswordPlaceholder')}
           error={errors.confirmPassword}
-          required
-          disabled={submitting}
-        />
-
-        {/* Role Selection */}
-        <FormInput
-          label={t('authRoleLabel')}
-          name="role"
-          type="select"
-          value={formData.role}
-          onChange={handleChange}
-          options={roleOptions}
-          icon={ShieldCheck}
           required
           disabled={submitting}
         />

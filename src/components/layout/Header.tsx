@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/context/LanguageContext';
-import { Globe, Menu, X, Sun, Moon, User, Download, Share, Check } from 'lucide-react';
+import { Globe, Menu, X, Sun, Moon, User, Download, Share, Check, LogOut } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
   const { language, setLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -253,13 +255,32 @@ export default function Header() {
             </div>
           )}
 
-          <Link 
-            href="/login" 
-            className="p-2 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
-            aria-label="Portal Login"
-          >
-            <User className="w-4 h-4" />
-          </Link>
+          {user ? (
+            <div className="flex items-center space-x-2">
+              <Link
+                href="/admin/dashboard"
+                className="w-8 h-8 rounded-full bg-accentViolet hover:bg-opacity-90 text-white font-bold text-xs flex items-center justify-center shadow-sm"
+                title="Admin Dashboard"
+              >
+                {user.name.charAt(0).toUpperCase()}
+              </Link>
+              <button
+                onClick={logout}
+                className="p-2 rounded-full bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+                title="Logout"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <Link 
+              href="/login" 
+              className="p-2 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+              aria-label="Portal Login"
+            >
+              <User className="w-4 h-4" />
+            </Link>
+          )}
 
           <a 
             href="#admission" 
@@ -333,13 +354,23 @@ export default function Header() {
             </div>
           )}
 
-          <Link 
-            href="/login" 
-            className="p-1.5 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
-            aria-label="Portal Login"
-          >
-            <User className="w-4 h-4" />
-          </Link>
+          {user ? (
+            <Link 
+              href="/admin/dashboard" 
+              className="w-7 h-7 rounded-full bg-accentViolet text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm font-bold text-xs"
+              aria-label="Admin Dashboard"
+            >
+              {user.name.charAt(0).toUpperCase()}
+            </Link>
+          ) : (
+            <Link 
+              href="/login" 
+              className="p-1.5 rounded-full bg-[#8B5CF6] hover:bg-[#7c3aed] text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm"
+              aria-label="Portal Login"
+            >
+              <User className="w-4 h-4" />
+            </Link>
+          )}
 
           <button 
             onClick={() => setIsOpen(!isOpen)} 
@@ -431,14 +462,32 @@ export default function Header() {
                   </div>
                 </div>
 
-                {/* Login Button */}
-                <Link 
-                  href="/login" 
-                  onClick={() => setIsOpen(false)}
-                  className="w-full text-center py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold block text-sm tracking-wide hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
-                >
-                  {t('authLoginBtn')}
-                </Link>
+                {/* Login / User Status */}
+                {user ? (
+                  <div className="space-y-2">
+                    <Link 
+                      href="/admin/dashboard" 
+                      onClick={() => setIsOpen(false)}
+                      className="w-full text-center py-3.5 rounded-xl bg-accentViolet/10 text-accentViolet font-bold block text-sm tracking-wide"
+                    >
+                      Dashboard ({user.name})
+                    </Link>
+                    <button 
+                      onClick={() => { logout(); setIsOpen(false); }}
+                      className="w-full text-center py-3.5 rounded-xl border border-red-200 dark:border-red-900/50 text-red-500 font-bold block text-sm tracking-wide hover:bg-red-500/5 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <Link 
+                    href="/login" 
+                    onClick={() => setIsOpen(false)}
+                    className="w-full text-center py-3.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold block text-sm tracking-wide hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"
+                  >
+                    {t('authLoginBtn')}
+                  </Link>
+                )}
 
                 {/* Admission Button */}
                 <a 

@@ -8,21 +8,23 @@ import FloatingWhatsApp from '@/components/ui/FloatingWhatsApp';
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   
-  // Hide layout elements on login, register, forgot-password, and admin routes
-  const isAuthOrAdmin = 
+  // Hide layout elements on login, register, forgot-password, and dashboard routes
+  const isAuthOrDashboard = 
     pathname === '/login' || 
     pathname === '/register' || 
     pathname === '/forgot-password' || 
-    pathname.startsWith('/admin');
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/teacher') ||
+    pathname.startsWith('/student');
 
   return (
     <>
-      {!isAuthOrAdmin && <Header />}
+      {!isAuthOrDashboard && <Header />}
       <main className="flex-grow">
         {children}
       </main>
-      {!isAuthOrAdmin && <FloatingWhatsApp />}
-      {!isAuthOrAdmin && <Footer />}
+      {!isAuthOrDashboard && <FloatingWhatsApp />}
+      {!isAuthOrDashboard && <Footer />}
     </>
   );
 }

@@ -91,11 +91,16 @@ function LoginFormContent() {
     setSuccessBanner(null);
 
     try {
-      const loginSuccessful = await login(formData.email, formData.password);
-      if (loginSuccessful) {
-        router.push('/admin/dashboard');
+      const loggedInUser = await login(formData.email, formData.password);
+      if (loggedInUser) {
+        if (loggedInUser.type === 'student') {
+          router.push('/student/dashboard');
+        } else if (loggedInUser.role === 'admin') {
+          router.push('/admin/dashboard');
+        } else if (loggedInUser.role === 'teacher') {
+          router.push('/teacher/dashboard');
+        }
       } else {
-        // Simulated failure banner
         setErrorBanner(t('authInvalidCredentials'));
       }
     } catch (err) {

@@ -30,46 +30,29 @@ export default function AdmissionForm() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Map our local state to Google Forms entry IDs for Google Sheets
-    const googleFormData = new FormData();
-    googleFormData.append("entry.1391467185", formData.name);
-    googleFormData.append("entry.1550355078", formData.contact);
-    googleFormData.append("entry.1523846839", formData.standard);
-    googleFormData.append("entry.2093283662", formData.medium);
-    googleFormData.append("entry.885624141", formData.message || "No additional message");
-    
-    // Create data for Web3Forms to get the beautiful email format with custom sender name
-    const emailData = new FormData();
-    emailData.append("access_key", "f24e9cf1-e909-4ef3-a011-3615452fe6e9");
-    emailData.append("from_name", "NEW ADMISSION");
-    emailData.append("subject", `🚨 NEW ADMISSION ALERT: ${formData.name}`);
-    emailData.append("Name", formData.name);
-    emailData.append("Contact", formData.contact);
-    emailData.append("Standard", formData.standard);
-    emailData.append("Medium", formData.medium);
-    emailData.append("Message", formData.message || "No additional message");
-
     try {
-      // 1. Send to Google Forms (Saves in Excel/Sheets)
-      fetch("https://docs.google.com/forms/d/e/1FAIpQLSdMOzUoYMnXq19CIQzN5C6QRsDx9NfhVWzH1FAyd59vX5JkJw/formResponse", {
-        method: "POST",
-        mode: "no-cors",
-        body: googleFormData,
-      });
-
-      // 2. Send to Web3Forms (Sends the beautiful email)
-      await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        body: emailData,
+      const response = await fetch('/api/students', {
+        method: 'POST',
         headers: {
-          'Accept': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          parentContact: formData.contact,
+          standard: formData.standard,
+          medium: formData.medium,
+          message: formData.message,
+        }),
       });
 
-      // With no-cors, we assume success if no error was thrown
-      setIsSuccess(true);
-      setFormData({ name: '', contact: '', standard: '', medium: '', message: '' });
-      setTimeout(() => setIsSuccess(false), 5000);
+      if (response.ok) {
+        setIsSuccess(true);
+        setFormData({ name: '', contact: '', standard: '', medium: '', message: '' });
+        setTimeout(() => setIsSuccess(false), 5000);
+      } else {
+        const errData = await response.json();
+        alert(errData.error || 'Submission failed. Please try again.');
+      }
     } catch (error) {
       console.error("Submission failed:", error);
       alert("Network error. Please check your connection and try again.");
