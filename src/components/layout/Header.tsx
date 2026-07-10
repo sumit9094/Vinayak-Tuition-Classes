@@ -258,9 +258,9 @@ export default function Header() {
           {user ? (
             <div className="flex items-center space-x-2">
               <Link
-                href="/admin/dashboard"
+                href={user.type === 'student' ? '/student/dashboard' : user.role === 'teacher' ? '/teacher/dashboard' : '/admin/dashboard'}
                 className="w-8 h-8 rounded-full bg-accentViolet hover:bg-opacity-90 text-white font-bold text-xs flex items-center justify-center shadow-sm"
-                title="Admin Dashboard"
+                title={user.type === 'student' ? 'Student Dashboard' : user.role === 'teacher' ? 'Teacher Dashboard' : 'Admin Dashboard'}
               >
                 {user.name.charAt(0).toUpperCase()}
               </Link>
@@ -356,9 +356,9 @@ export default function Header() {
 
           {user ? (
             <Link 
-              href="/admin/dashboard" 
+              href={user.type === 'student' ? '/student/dashboard' : user.role === 'teacher' ? '/teacher/dashboard' : '/admin/dashboard'}
               className="w-7 h-7 rounded-full bg-accentViolet text-white transition-colors focus:outline-none flex items-center justify-center shadow-sm font-bold text-xs"
-              aria-label="Admin Dashboard"
+              aria-label={user.type === 'student' ? 'Student Dashboard' : user.role === 'teacher' ? 'Teacher Dashboard' : 'Admin Dashboard'}
             >
               {user.name.charAt(0).toUpperCase()}
             </Link>
@@ -466,7 +466,7 @@ export default function Header() {
                 {user ? (
                   <div className="space-y-2">
                     <Link 
-                      href="/admin/dashboard" 
+                      href={user.type === 'student' ? '/student/dashboard' : user.role === 'teacher' ? '/teacher/dashboard' : '/admin/dashboard'}
                       onClick={() => setIsOpen(false)}
                       className="w-full text-center py-3.5 rounded-xl bg-accentViolet/10 text-accentViolet font-bold block text-sm tracking-wide"
                     >
