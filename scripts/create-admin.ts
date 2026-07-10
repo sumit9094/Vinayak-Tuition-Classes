@@ -39,29 +39,27 @@ async function seedAdmin() {
     await connectDB();
 
     console.log('Checking if Admin already exists...');
-    const existingAdmin = await User.findOne({ role: 'admin' });
-
-    if (existingAdmin) {
-      console.log('Admin already exists. Exiting seed script.');
-      await mongoose.connection.close();
-      process.exit(0);
-    }
-
-    console.log('Hashing password...');
+    const adminUser = await User.findOne({ role: 'admin' });
     const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
 
-    console.log('Creating Admin user...');
-    const adminUser = new User({
-      name: 'Chirag Sir',
-      email: ADMIN_EMAIL.toLowerCase(),
-      phone: '9228174188',
-      password: hashedPassword,
-      role: 'admin',
-      branches: [...BRANCHES], // Admin gets both branches
-    });
-
-    await adminUser.save();
-    console.log('Admin user seeded successfully!');
+    if (adminUser) {
+      console.log('Admin exists. Updating password...');
+      adminUser.password = hashedPassword;
+      await adminUser.save();
+      console.log('Admin password updated successfully!');
+    } else {
+      console.log('Creating Admin user...');
+      const newAdmin = new User({
+        name: 'Chirag Sir',
+        email: ADMIN_EMAIL.toLowerCase(),
+        phone: '9228174188',
+        password: hashedPassword,
+        role: 'admin',
+        branches: [...BRANCHES], // Admin gets both branches
+      });
+      await newAdmin.save();
+      console.log('Admin user seeded successfully!');
+    }
 
     await mongoose.connection.close();
   } catch (error) {
