@@ -42,8 +42,19 @@ export async function GET(req: Request) {
       const teacherBranches = session.branches || [];
       const teacherSubject = session.subject;
       
+      let branchQuery: any;
+      if (branchParam) {
+        if (teacherBranches.includes(branchParam)) {
+          branchQuery = branchParam;
+        } else {
+          return NextResponse.json({ error: 'Unauthorized branch access' }, { status: 403 });
+        }
+      } else {
+        branchQuery = { $in: teacherBranches };
+      }
+      
       query = {
-        branch: { $in: teacherBranches },
+        branch: branchQuery,
         subjects: teacherSubject,
       };
     } else {
