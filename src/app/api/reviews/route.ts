@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       
       try {
         const decoded: any = jwt.verify(token, JWT_SECRET!);
-        if (decoded.role !== 'Admin') {
+        if (decoded.role !== 'admin') {
           return NextResponse.json(
             { error: 'Access denied: Admins only' },
             { status: 403 }

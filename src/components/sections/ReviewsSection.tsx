@@ -86,6 +86,8 @@ export default function ReviewsSection() {
               color: colors[idx % colors.length]
             }))
             setTestimonials(mapped)
+          } else {
+            setTestimonials([])
           }
         }
       } catch (err) {
@@ -163,7 +165,12 @@ export default function ReviewsSection() {
           align="center"
         />
 
-        {testimonials.length > 0 && (
+        {testimonials.length === 0 ? (
+          <div className="text-center py-16 text-slate-400 dark:text-slate-500 font-semibold text-xs border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl max-w-3xl mx-auto my-12 flex flex-col items-center justify-center space-y-2">
+            <MessageSquare className="w-10 h-10 text-slate-350 dark:text-slate-700 animate-pulse" />
+            <span>Be the first to share your experience!</span>
+          </div>
+        ) : (
           <div className="relative max-w-3xl mx-auto mb-16 mt-12 px-4 sm:px-12">
             {/* Slider Controls - Desktop */}
             <button 

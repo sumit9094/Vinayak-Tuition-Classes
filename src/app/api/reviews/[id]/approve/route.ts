@@ -34,7 +34,7 @@ export async function PATCH(
       );
     }
     
-    if (decoded.role !== 'Admin') {
+    if (decoded.role !== 'admin') {
       return NextResponse.json(
         { error: 'Access denied: Only Admins can approve reviews' },
         { status: 403 }

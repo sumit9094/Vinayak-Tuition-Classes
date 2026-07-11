@@ -23,7 +23,8 @@ import {
   AlertCircle,
   Check,
   Award,
-  ClipboardList
+  ClipboardList,
+  Star
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -81,10 +82,12 @@ export default function AdminDashboardPage() {
   const { user, logout } = useAuth();
   const { language } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'students' | 'teachers' | 'enquiries' | 'attendance' | 'marks' | 'fees'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'teachers' | 'enquiries' | 'reviews' | 'attendance' | 'marks' | 'fees'>('students');
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
+  const [reviewsPending, setReviewsPending] = useState<any[]>([]);
+  const [reviewsApproved, setReviewsApproved] = useState<any[]>([]);
   
   // Overview tables filter selections
   const [filterBranch, setFilterBranch] = useState<string>('VINAYAK 1 SHIVAM');
@@ -121,6 +124,9 @@ export default function AdminDashboardPage() {
       const teachersRes = await fetch('/api/teachers');
       // 3. Fetch Enquiries
       const enquiriesRes = await fetch('/api/admission-enquiry');
+      // 4. Fetch Reviews
+      const pendingRes = await fetch('/api/reviews/pending');
+      const approvedRes = await fetch('/api/reviews');
 
       if (studentsRes.ok && teachersRes.ok) {
         const studentsData = await studentsRes.json();
@@ -135,6 +141,16 @@ export default function AdminDashboardPage() {
         const enquiriesData = await enquiriesRes.json();
         setEnquiries(enquiriesData.enquiries || []);
       }
+
+      if (pendingRes.ok) {
+        const data = await pendingRes.json();
+        setReviewsPending(data.reviews || []);
+      }
+
+      if (approvedRes.ok) {
+        const data = await approvedRes.json();
+        setReviewsApproved(data.reviews || []);
+      }
     } catch (err) {
       console.error(err);
       setErrorMsg('Network error. Failed to connect to server.');
@@ -146,6 +162,45 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleApproveReview = async (id: string) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/reviews/${id}/approve`, {
+        method: 'PATCH',
+      });
+      if (res.ok) {
+        setSuccessMsg('Review approved successfully!');
+        fetchData();
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.error || 'Failed to approve review');
+      }
+    } catch (e) {
+      setErrorMsg('Failed to connect to the server');
+    }
+  };
+
+  const handleDeleteReview = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this review?')) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/reviews/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setSuccessMsg('Review deleted successfully!');
+        fetchData();
+      } else {
+        const data = await res.json();
+        setErrorMsg(data.error || 'Failed to delete review');
+      }
+    } catch (e) {
+      setErrorMsg('Failed to connect to the server');
+    }
+  };
 
   // Fetch attendance or marks logs when filters change
   const fetchOverviewLogs = async () => {
@@ -364,7 +419,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
         {/* Navigation Tabs */}
         <div className="flex space-x-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-850 overflow-x-auto">
-          {(['students', 'teachers', 'enquiries', 'attendance', 'marks', 'fees'] as const).map((tab) => (
+          {(['students', 'teachers', 'enquiries', 'reviews', 'attendance', 'marks', 'fees'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -374,7 +429,7 @@ export default function AdminDashboardPage() {
                   : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              {tab === 'enquiries' ? 'admissions / enquiries' : tab}
+              {tab === 'enquiries' ? 'admissions / enquiries' : tab === 'reviews' ? 'reviews / testimonials' : tab}
             </button>
           ))}
         </div>
@@ -711,6 +766,127 @@ export default function AdminDashboardPage() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Reviews Moderation Tab */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-8">
+            {/* Pending Reviews Card */}
+            <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div className="text-left flex items-center space-x-2">
+                  <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  <div>
+                    <h2 className="text-base font-black text-slate-900 dark:text-white">Pending Moderation Queue</h2>
+                    <p className="text-[10px] font-semibold text-slate-400">Reviews submitted by visitors that require approval.</p>
+                  </div>
+                </div>
+                <span className="bg-amber-500/10 text-amber-600 border border-amber-500/20 px-2.5 py-1 rounded-full text-[10px] font-black uppercase">
+                  {reviewsPending.length} Pending
+                </span>
+              </div>
+
+              {reviewsPending.length === 0 ? (
+                <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
+                  No pending reviews found.
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {reviewsPending.map((rev) => (
+                    <div key={rev._id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between text-left space-y-4 shadow-sm">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-855 dark:text-slate-200">{rev.name}</span>
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${
+                                  i < rev.rating
+                                    ? 'text-amber-500 fill-amber-500'
+                                    : 'text-slate-350 dark:text-slate-700'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-655 dark:text-slate-400 italic">"{rev.message}"</p>
+                      </div>
+                      <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-850">
+                        <button
+                          onClick={() => handleDeleteReview(rev._id)}
+                          className="px-3 py-1.5 text-[10px] font-black text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer"
+                        >
+                          Reject & Delete
+                        </button>
+                        <button
+                          onClick={() => handleApproveReview(rev._id)}
+                          className="px-3 py-1.5 text-[10px] font-black text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                        >
+                          Approve Live
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Approved Reviews Card */}
+            <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div className="text-left flex items-center space-x-2">
+                  <Check className="w-5 h-5 text-emerald-500" />
+                  <div>
+                    <h2 className="text-base font-black text-slate-900 dark:text-white">Live Testimonials</h2>
+                    <p className="text-[10px] font-semibold text-slate-400">Approved testimonials currently visible on the homepage.</p>
+                  </div>
+                </div>
+                <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2.5 py-1 rounded-full text-[10px] font-black uppercase">
+                  {reviewsApproved.length} Live
+                </span>
+              </div>
+
+              {reviewsApproved.length === 0 ? (
+                <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
+                  No approved reviews yet.
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {reviewsApproved.map((rev) => (
+                    <div key={rev._id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between text-left space-y-4 shadow-sm">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-855 dark:text-slate-200">{rev.name}</span>
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-3.5 h-3.5 ${
+                                  i < rev.rating
+                                    ? 'text-amber-500 fill-amber-500'
+                                    : 'text-slate-350 dark:text-slate-700'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-655 dark:text-slate-400 italic">"{rev.message}"</p>
+                      </div>
+                      <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-850">
+                        <button
+                          onClick={() => handleDeleteReview(rev._id)}
+                          className="px-3 py-1.5 text-[10px] font-black text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer"
+                        >
+                          Remove Testimonial
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
