@@ -74,6 +74,7 @@ export async function POST() {
           phone: user.phone,
           role: user.role,
           branches: user.branches,
+          standards: user.standards,
           subject: user.subject,
         },
       });

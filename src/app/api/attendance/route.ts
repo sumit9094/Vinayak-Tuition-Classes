@@ -28,6 +28,69 @@ export async function POST(req: Request) {
 
     await connectDB();
     const body = await req.json();
+
+    // Check if bulk record structure
+    if (body.records && Array.isArray(body.records)) {
+      const { branch, subject, date, records } = body;
+      if (!branch || !subject || !date || !records || records.length === 0) {
+        return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+      }
+
+      // 1. Verify branches array permission
+      const staffBranches = session.branches || [];
+      if (!staffBranches.includes(branch)) {
+        return NextResponse.json({ error: 'Unauthorized branch selection' }, { status: 403 });
+      }
+
+      // 2. Verify subject permission
+      if (session.role === 'teacher' && session.subject !== subject) {
+        return NextResponse.json({ error: 'Unauthorized subject selection' }, { status: 403 });
+      }
+
+      // 3. Fetch allowed student IDs for standard check
+      const teacherStandards = session.role === 'teacher' ? (session.standards || []) : null;
+      const studentQuery: any = { branch };
+      if (teacherStandards) {
+        studentQuery.standard = { $in: teacherStandards };
+      }
+      
+      const allowedStudents = await Student.find(studentQuery).select('_id');
+      const allowedStudentIds = new Set(allowedStudents.map(s => s._id.toString()));
+
+      // 4. Validate that all submitted students are allowed
+      for (const rec of records) {
+        if (!allowedStudentIds.has(rec.studentId)) {
+          return NextResponse.json(
+            { error: `Student with ID ${rec.studentId} is not in your authorized branch/standards.` },
+            { status: 400 }
+          );
+        }
+      }
+
+      // 5. Build bulk write operations
+      const operations = records.map((rec: any) => ({
+        updateOne: {
+          filter: {
+            studentId: rec.studentId,
+            subject,
+            branch,
+            date: new Date(date),
+          },
+          update: {
+            $set: {
+              status: rec.status,
+              markedBy: session.userId,
+            }
+          },
+          upsert: true
+        }
+      }));
+
+      await Attendance.bulkWrite(operations);
+      return NextResponse.json({ message: `Attendance saved for ${records.length} students` });
+    }
+
+    // Fallback: Single student marking
     const { studentId, subject, branch, date, status } = body;
 
     if (!studentId || !subject || !branch || !date || !status) {
@@ -40,7 +103,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized branch selection' }, { status: 403 });
     }
 
-    // 2. Verify subject permission (Teachers can only mark their assigned subject)
+    // 2. Verify subject permission
     if (session.role === 'teacher' && session.subject !== subject) {
       return NextResponse.json({ error: 'Unauthorized subject selection' }, { status: 403 });
     }
@@ -51,17 +114,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Student not found in this branch' }, { status: 400 });
     }
 
-    // Save attendance record
-    const attendance = new Attendance({
-      studentId,
-      subject,
-      branch,
-      date: new Date(date),
-      status,
-      markedBy: session.userId,
-    });
+    // Verify standard permission for teacher
+    if (session.role === 'teacher') {
+      const teacherStandards = session.standards || [];
+      if (!teacherStandards.includes(student.standard)) {
+        return NextResponse.json({ error: 'Unauthorized student standard' }, { status: 403 });
+      }
+    }
 
-    await attendance.save();
+    // Save/Update attendance record (prevent duplicates)
+    const attendance = await Attendance.findOneAndUpdate(
+      { studentId, subject, branch, date: new Date(date) },
+      {
+        $set: {
+          status,
+          markedBy: session.userId,
+        }
+      },
+      { upsert: true, new: true }
+    );
+    
     return NextResponse.json(attendance, { status: 201 });
   } catch (error: any) {
     console.error('Mark Attendance API Error:', error);
@@ -125,12 +197,31 @@ export async function GET(req: Request) {
         return NextResponse.json({ error: 'Unauthorized access to subject' }, { status: 403 });
       }
 
+      // Query allowed students based on branch and standard permissions
+      let allowedStudentQuery: any = { branch };
+      if (session.role === 'teacher') {
+        const teacherStandards = session.standards || [];
+        allowedStudentQuery.standard = { $in: teacherStandards };
+      }
+      const allowedStudents = await Student.find(allowedStudentQuery).select('_id');
+      const allowedStudentIds = allowedStudents.map(s => s._id);
+
       const query: any = {
         branch,
         subject,
+        studentId: { $in: allowedStudentIds },
       };
 
-      if (startDateParam && endDateParam) {
+      const dateParam = searchParams.get('date');
+      if (dateParam) {
+        const dateObj = new Date(dateParam);
+        const startOfDay = new Date(dateObj.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(dateObj.setHours(23, 59, 59, 999));
+        query.date = {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        };
+      } else if (startDateParam && endDateParam) {
         query.date = {
           $gte: new Date(startDateParam),
           $lte: new Date(endDateParam),

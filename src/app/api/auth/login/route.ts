@@ -47,6 +47,7 @@ export async function POST(req: Request) {
         userId: user._id.toString(), 
         role: user.role,
         branches: user.branches,
+        standards: user.standards,
         subject: user.subject 
       },
       JWT_SECRET!,
@@ -72,6 +73,7 @@ export async function POST(req: Request) {
         email: user.email,
         role: user.role,
         branches: user.branches,
+        standards: user.standards,
         subject: user.subject,
       },
     });

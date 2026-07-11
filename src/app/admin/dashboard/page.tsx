@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { 
@@ -43,6 +44,7 @@ interface Teacher {
   email: string;
   phone: string;
   branches: string[];
+  standards?: string[];
   subject: string;
   createdAt: string;
 }
@@ -101,6 +103,7 @@ export default function AdminDashboardPage() {
     phone: '',
     password: '',
     branches: [] as string[],
+    standards: [] as string[],
     subject: 'Maths',
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -178,11 +181,25 @@ export default function AdminDashboardPage() {
     });
   };
 
+  const handleStandardCheckbox = (std: string) => {
+    setNewTeacher((prev) => {
+      const exists = prev.standards.includes(std);
+      const nextStandards = exists
+        ? prev.standards.filter((s) => s !== std)
+        : [...prev.standards, std];
+      return { ...prev, standards: nextStandards };
+    });
+  };
+
   // Submit New Teacher handler
   const handleAddTeacherSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newTeacher.branches.length === 0) {
       setErrorMsg('Please select at least one branch for the teacher');
+      return;
+    }
+    if (newTeacher.standards.length === 0) {
+      setErrorMsg('Please select at least one standard for the teacher');
       return;
     }
 
@@ -205,6 +222,7 @@ export default function AdminDashboardPage() {
           phone: '',
           password: '',
           branches: [],
+          standards: [],
           subject: 'Maths',
         });
         // Reload list
@@ -255,6 +273,12 @@ export default function AdminDashboardPage() {
 
         {/* Action Controls */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-3">
+          <Link
+            href="/teacher/dashboard"
+            className="px-4 py-2 text-xs font-black bg-[#8B5CF6]/10 hover:bg-[#8B5CF6]/20 text-[#8B5CF6] border border-[#8B5CF6]/20 rounded-xl transition-all shadow-sm flex items-center"
+          >
+            Switch to Teacher Workspace
+          </Link>
           <button
             onClick={fetchData}
             className="px-4 py-2 text-xs font-bold bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shadow-sm cursor-pointer text-slate-700 dark:text-slate-200"
@@ -454,6 +478,7 @@ export default function AdminDashboardPage() {
                         <th className="py-3 px-4">Teacher Name</th>
                         <th className="py-3 px-4">Subject</th>
                         <th className="py-3 px-4">Branches</th>
+                        <th className="py-3 px-4">Standards</th>
                         <th className="py-3 px-4">Phone</th>
                       </tr>
                     </thead>
@@ -474,6 +499,15 @@ export default function AdminDashboardPage() {
                               {tch.branches.map((br, idx) => (
                                 <span key={idx} className="bg-blue-500/10 text-blue-500 border border-blue-500/20 px-2 py-0.5 rounded text-[9px] font-black uppercase">
                                   {br.split(' ')[1] || br}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex flex-wrap gap-1">
+                              {(tch.standards || []).map((std, idx) => (
+                                <span key={idx} className="bg-[#8B5CF6]/10 text-[#8B5CF6] border border-[#8B5CF6]/20 px-2 py-0.5 rounded text-[9px] font-black uppercase">
+                                  Std. {std}
                                 </span>
                               ))}
                             </div>
@@ -569,6 +603,21 @@ export default function AdminDashboardPage() {
                         className="rounded border-slate-300 text-[#8B5CF6] focus:ring-[#8B5CF6] cursor-pointer"
                       />
                       <span>{br}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Assigned Standards</label>
+                  {["9", "10", "11", "12"].map((std, idx) => (
+                    <label key={idx} className="flex items-center space-x-2 text-xs font-semibold text-slate-700 dark:text-slate-350 select-none cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newTeacher.standards.includes(std)}
+                        onChange={() => handleStandardCheckbox(std)}
+                        className="rounded border-slate-300 text-[#8B5CF6] focus:ring-[#8B5CF6] cursor-pointer"
+                      />
+                      <span>Standard {std}</span>
                     </label>
                   ))}
                 </div>

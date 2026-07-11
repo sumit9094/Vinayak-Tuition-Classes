@@ -9,12 +9,14 @@ import {
   MapPin, 
   CalendarCheck, 
   FileSpreadsheet, 
-  PlusCircle, 
   CheckCircle, 
   AlertCircle,
   Search,
-  X,
-  ClipboardList
+  ClipboardList,
+  Calendar,
+  Save,
+  Check,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -31,483 +33,597 @@ interface Student {
 export default function TeacherDashboardPage() {
   const { user } = useAuth();
   const { language } = useLanguage();
+  const isGj = language === 'GJ';
 
   const assignedBranches = user?.branches || [];
+  const assignedStandards = user?.standards || [];
+
   const [activeBranch, setActiveBranch] = useState<string>('');
+  const [activeStandard, setActiveStandard] = useState<string>('');
+  const [activeSubTab, setActiveSubTab] = useState<'attendance' | 'marks'>('attendance');
   
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // Modal states
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
-  const [modalType, setModalType] = useState<'attendance' | 'marks' | null>(null);
-
   // Form states
-  const [attendanceStatus, setAttendanceStatus] = useState<'present' | 'absent'>('present');
   const [attendanceDate, setAttendanceDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const [testName, setTestName] = useState<string>('');
+  const [totalMarks, setTotalMarks] = useState<string>('50');
 
-  const [testName, setTestName] = useState('');
-  const [marksObtained, setMarksObtained] = useState('');
-  const [totalMarks, setTotalMarks] = useState('50');
-  const [formSubmitting, setFormSubmitting] = useState(false);
+  // Grid states
+  const [gridAttendance, setGridAttendance] = useState<Record<string, 'present' | 'absent'>>({});
+  const [gridMarks, setGridMarks] = useState<Record<string, string>>({});
 
-  // Set default branch on load
+  // Set default values on load
   useEffect(() => {
     if (assignedBranches.length > 0 && !activeBranch) {
       setActiveBranch(assignedBranches[0]);
     }
-  }, [assignedBranches, activeBranch]);
+    if (assignedStandards.length > 0 && !activeStandard) {
+      setActiveStandard(assignedStandards[0]);
+    }
+  }, [assignedBranches, activeBranch, assignedStandards, activeStandard]);
 
-  // Fetch students for active branch
-  const fetchStudents = async () => {
-    if (!activeBranch) return;
+  // Fetch student list and existing records when branch, standard, tab, date, or sync action changes
+  const fetchStudentsAndExistingLogs = async () => {
+    if (!activeBranch || !activeStandard || !user?.subject) return;
     setLoading(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
+
     try {
-      const response = await fetch(`/api/students?branch=${encodeURIComponent(activeBranch)}`);
-      if (response.ok) {
-        const data = await response.json();
-        setStudents(data.students || []);
-      } else {
-        setErrorMsg('Failed to fetch student data');
+      // 1. Fetch Students matching branch and standard
+      const studentRes = await fetch(
+        `/api/students?branch=${encodeURIComponent(activeBranch)}&standard=${activeStandard}`
+      );
+      if (!studentRes.ok) throw new Error('Failed to load student list');
+      const studentData = await studentRes.json();
+      const studentList: Student[] = studentData.students || [];
+      setStudents(studentList);
+
+      // 2. Initialize default grid state
+      const initialAttendance: Record<string, 'present' | 'absent'> = {};
+      const initialMarks: Record<string, string> = {};
+      studentList.forEach(s => {
+        initialAttendance[s._id] = 'present';
+        initialMarks[s._id] = '';
+      });
+
+      // 3. Fetch existing logs to pre-fill
+      if (activeSubTab === 'attendance') {
+        const attRes = await fetch(
+          `/api/attendance?branch=${encodeURIComponent(activeBranch)}&subject=${encodeURIComponent(user.subject)}&date=${attendanceDate}`
+        );
+        if (attRes.ok) {
+          const attData = await attRes.json();
+          const records = attData.records || [];
+          records.forEach((r: any) => {
+            const sId = typeof r.studentId === 'object' ? r.studentId._id : r.studentId;
+            initialAttendance[sId] = r.status;
+          });
+        }
+      } else if (activeSubTab === 'marks' && testName.trim()) {
+        const marksRes = await fetch(
+          `/api/marks?branch=${encodeURIComponent(activeBranch)}&subject=${encodeURIComponent(user.subject)}&testName=${encodeURIComponent(testName.trim())}`
+        );
+        if (marksRes.ok) {
+          const marksData = await marksRes.json();
+          const records = marksData.records || [];
+          records.forEach((r: any) => {
+            const sId = typeof r.studentId === 'object' ? r.studentId._id : r.studentId;
+            initialMarks[sId] = r.marksObtained !== null && r.marksObtained !== undefined ? String(r.marksObtained) : '';
+            if (r.totalMarks) {
+              setTotalMarks(String(r.totalMarks));
+            }
+          });
+        }
       }
-    } catch (err) {
+
+      setGridAttendance(initialAttendance);
+      setGridMarks(initialMarks);
+    } catch (err: any) {
       console.error(err);
-      setErrorMsg('Network error. Failed to load students.');
+      setErrorMsg(isGj ? 'ડેટા લોડ કરવામાં નિષ્ફળતા' : 'Failed to retrieve register records');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStudents();
-  }, [activeBranch]);
+    fetchStudentsAndExistingLogs();
+  }, [activeBranch, activeStandard, activeSubTab, attendanceDate]);
 
-  // Filter students by search query
-  const filteredStudents = students.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.standard.includes(searchQuery)
-  );
+  const handleAttendanceChange = (studentId: string, status: 'present' | 'absent') => {
+    setGridAttendance(prev => ({ ...prev, [studentId]: status }));
+  };
 
-  const handleOpenModal = (student: Student, type: 'attendance' | 'marks') => {
-    setSelectedStudent(student);
-    setModalType(type);
-    // Reset forms
-    setAttendanceStatus('present');
-    setAttendanceDate(new Date().toISOString().split('T')[0]);
-    setTestName('');
-    setMarksObtained('');
-    setTotalMarks('50');
+  const handleMarkChange = (studentId: string, value: string) => {
+    setGridMarks(prev => ({ ...prev, [studentId]: value }));
+  };
+
+  const handleBulkAttendanceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (students.length === 0) return;
+
+    setSaving(true);
     setErrorMsg(null);
     setSuccessMsg(null);
-  };
 
-  const handleCloseModal = () => {
-    setSelectedStudent(null);
-    setModalType(null);
-  };
+    const recordsArray = students.map(s => ({
+      studentId: s._id,
+      status: gridAttendance[s._id] || 'present',
+    }));
 
-  // Submit Attendance Handler
-  const handleMarkAttendance = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedStudent || !user?.subject) return;
-
-    setFormSubmitting(true);
-    setErrorMsg(null);
     try {
       const response = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentId: selectedStudent._id,
-          subject: user.subject,
           branch: activeBranch,
+          subject: user?.subject,
           date: attendanceDate,
-          status: attendanceStatus,
+          records: recordsArray,
         }),
       });
 
       if (response.ok) {
-        setSuccessMsg(`Attendance marked successfully for ${selectedStudent.name}!`);
-        setTimeout(() => {
-          handleCloseModal();
-          setSuccessMsg(null);
-        }, 1500);
+        setSuccessMsg(
+          isGj
+            ? `${students.length} વિદ્યાર્થીઓની હાજરી સફળતાપૂર્વક સાચવવામાં આવી!`
+            : `Attendance saved for ${students.length} students successfully!`
+        );
       } else {
         const data = await response.json();
-        setErrorMsg(data.error || 'Failed to submit attendance');
+        setErrorMsg(data.error || 'Failed to submit attendance logs');
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg('Failed to connect to server.');
+      setErrorMsg('Failed to connect to the server');
     } finally {
-      setFormSubmitting(false);
+      setSaving(false);
     }
   };
 
-  // Submit Test Marks Handler
-  const handleAddMarks = async (e: React.FormEvent) => {
+  const handleBulkMarksSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedStudent || !user?.subject) return;
+    if (students.length === 0) return;
 
-    if (Number(marksObtained) > Number(totalMarks)) {
-      setErrorMsg('Obtained marks cannot exceed total marks');
+    if (!testName.trim()) {
+      setErrorMsg(isGj ? 'મહેરબાની કરીને ટેસ્ટ નામ દાખલ કરો' : 'Test Name is required');
       return;
     }
 
-    setFormSubmitting(true);
+    setSaving(true);
     setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const recordsArray = students.map(s => ({
+      studentId: s._id,
+      marksObtained: gridMarks[s._id] === '' ? null : Number(gridMarks[s._id]),
+    }));
+
+    // Validation
+    for (const rec of recordsArray) {
+      if (rec.marksObtained !== null && Number(rec.marksObtained) > Number(totalMarks)) {
+        setErrorMsg(
+          isGj
+            ? `મેળવેલ ગુણ કુલ ગુણ (${totalMarks}) થી વધુ ન હોઈ શકે`
+            : `Obtained marks cannot exceed total marks of ${totalMarks}`
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
     try {
       const response = await fetch('/api/marks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentId: selectedStudent._id,
-          subject: user.subject,
           branch: activeBranch,
-          testName,
-          marksObtained: Number(marksObtained),
+          subject: user?.subject,
+          testName: testName.trim(),
           totalMarks: Number(totalMarks),
+          records: recordsArray,
         }),
       });
 
       if (response.ok) {
-        setSuccessMsg(`Test marks recorded successfully for ${selectedStudent.name}!`);
-        setTimeout(() => {
-          handleCloseModal();
-          setSuccessMsg(null);
-        }, 1500);
+        setSuccessMsg(
+          isGj
+            ? `${students.length} વિદ્યાર્થીઓના ગુણ સફળતાપૂર્વક સાચવવામાં આવ્યા!`
+            : `Test marks saved for ${students.length} students successfully!`
+        );
       } else {
         const data = await response.json();
-        setErrorMsg(data.error || 'Failed to record marks');
+        setErrorMsg(data.error || 'Failed to submit exam grades');
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg('Failed to connect to server.');
+      setErrorMsg('Failed to connect to the server');
     } finally {
-      setFormSubmitting(false);
+      setSaving(false);
     }
   };
 
+  // Search filter
+  const filteredStudents = students.filter(s =>
+    s.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
-      {/* Header Banner */}
+      {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 text-left">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
           <span className="text-[10px] font-black uppercase text-[#8B5CF6] tracking-[0.2em] bg-[#8B5CF6]/10 px-3 py-1 rounded-full border border-[#8B5CF6]/20">
-            {language === 'EN' ? 'Teacher Portal' : 'શિક્ષક પોર્ટલ'}
+            {isGj ? 'શિક્ષક કાર્યક્ષેત્ર' : 'Teacher Workspace'}
           </span>
           <h1 className="text-3xl font-black mt-3 tracking-tight text-slate-900 dark:text-white">
             Hello, {user?.name}!
           </h1>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-            Subject: <strong className="text-[#8B5CF6]">{user?.subject}</strong> | Manage your students, attendance, and exam grades.
+            {isGj ? 'વિષય: ' : 'Subject: '}<strong className="text-[#8B5CF6]">{user?.subject}</strong> | {isGj ? 'વિદ્યાર્થીઓ અને શૈક્ષણિક રેકોર્ડનું સંચાલન.' : 'Manage student attendance and test marks in bulk.'}
           </p>
         </motion.div>
       </div>
 
-      {/* Branch Selector Tabs */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-4 mb-6 border-b border-slate-200 dark:border-slate-800">
-        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mr-2 shrink-0">
-          {language === 'EN' ? 'Select Active Branch:' : 'શાખા પસંદ કરો:'}
-        </span>
-        {assignedBranches.map((br) => (
-          <button
-            key={br}
-            onClick={() => setActiveBranch(br)}
-            className={`px-4 py-2 text-xs font-bold rounded-full transition-all border shrink-0 ${
-              activeBranch === br
-                ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-md shadow-[#8B5CF6]/10'
-                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50'
-            }`}
-          >
-            <span className="flex items-center space-x-1.5">
-              <MapPin className="w-3.5 h-3.5" />
-              <span>{br}</span>
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Global Alerts */}
+      {errorMsg && (
+        <div className="flex items-center gap-2 p-4 mb-6 bg-red-500/10 border border-red-500/20 text-red-500 rounded-2xl text-sm font-semibold text-left">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
 
-      {/* Main Student List Workspace */}
-      <div className="glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm flex flex-col">
-        {/* Table Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center space-x-2">
-            <Users className="w-5 h-5 text-[#8B5CF6]" />
-            <h2 className="text-base font-black text-slate-900 dark:text-white">
-              {language === 'EN' ? 'Class Enrolled Students' : 'વર્ગના વિદ્યાર્થીઓ'}
-            </h2>
-            <span className="text-[10px] font-bold bg-[#8B5CF6]/10 text-[#8B5CF6] px-2.5 py-0.5 rounded-full border border-[#8B5CF6]/20">
-              {filteredStudents.length} Students
-            </span>
-          </div>
-          
-          {/* Search bar */}
-          <div className="relative max-w-sm w-full md:w-72">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder={language === 'EN' ? 'Search by name or std...' : 'શોધો...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none transition-colors"
-            />
+      {successMsg && (
+        <div className="flex items-center gap-2 p-4 mb-6 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-2xl text-sm font-semibold text-left">
+          <CheckCircle className="w-5 h-5 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {/* Selectors Grid (Branch & Standard) */}
+      <div className="grid md:grid-cols-2 gap-6 mb-8 text-left">
+        {/* Branch Selection */}
+        <div className="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-3">
+            {isGj ? 'સક્રિય શાખા (Branch):' : 'Select Branch:'}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {assignedBranches.map((br) => (
+              <button
+                key={br}
+                onClick={() => setActiveBranch(br)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border shrink-0 ${
+                  activeBranch === br
+                    ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-md shadow-[#8B5CF6]/10'
+                    : 'bg-white dark:bg-slate-900 border-slate-205 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center space-x-1.5">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span>{br}</span>
+                </span>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Students Table */}
-        {loading ? (
-          <div className="py-20 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+        {/* Standard Selection */}
+        <div className="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-3">
+            {isGj ? 'સક્રિય ધોરણ (Standard):' : 'Select Standard:'}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {assignedStandards.map((std) => (
+              <button
+                key={std}
+                onClick={() => setActiveStandard(std)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border shrink-0 ${
+                  activeStandard === std
+                    ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-md shadow-[#8B5CF6]/10'
+                    : 'bg-white dark:bg-slate-900 border-slate-205 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center space-x-1.5">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Standard {std}</span>
+                </span>
+              </button>
+            ))}
           </div>
-        ) : filteredStudents.length === 0 ? (
-          <div className="text-center py-16 text-slate-400 dark:text-slate-550 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center space-y-2">
-            <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-700" />
-            <span className="text-xs font-semibold">No students matching your branch/subject criteria.</span>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
-                  <th className="py-3 px-4">Student Name</th>
-                  <th className="py-3 px-4">Standard</th>
-                  <th className="py-3 px-4">Contact Info</th>
-                  <th className="py-3 px-4 text-center">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
-                {filteredStudents.map((student) => (
-                  <tr 
-                    key={student._id}
-                    className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors"
-                  >
-                    <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">
-                      {student.name}
-                    </td>
-                    <td className="py-4 px-4 font-semibold text-slate-555 dark:text-slate-400">
-                      Std. {student.standard}
-                    </td>
-                    <td className="py-4 px-4 font-semibold text-slate-500 dark:text-slate-500">
-                      <div className="space-y-0.5">
-                        <span className="block text-[10px]">{student.email}</span>
-                        <span className="block text-[9px]">{student.phone}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center justify-center space-x-2">
-                        <button
-                          onClick={() => handleOpenModal(student, 'attendance')}
-                          className="flex items-center space-x-1.5 px-3 py-1.5 text-[10px] font-bold bg-[#8B5CF6]/10 text-[#8B5CF6] hover:bg-[#8B5CF6]/20 border border-[#8B5CF6]/20 rounded-lg transition-all"
-                        >
-                          <CalendarCheck className="w-3.5 h-3.5" />
-                          <span>Mark Attendance</span>
-                        </button>
-                        <button
-                          onClick={() => handleOpenModal(student, 'marks')}
-                          className="flex items-center space-x-1.5 px-3 py-1.5 text-[10px] font-bold bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-lg transition-all"
-                        >
-                          <FileSpreadsheet className="w-3.5 h-3.5" />
-                          <span>Add Test Marks</span>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        </div>
       </div>
 
-      {/* Interactive Modal Portal */}
-      <AnimatePresence>
-        {selectedStudent && modalType && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Modal Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={handleCloseModal}
-              className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm"
-            />
+      {/* Sub-Tabs Switcher (Attendance vs Marks) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="flex space-x-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-850 self-start">
+          <button
+            onClick={() => setActiveSubTab('attendance')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeSubTab === 'attendance'
+                ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-800'
+                : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <CalendarCheck className="w-3.5 h-3.5" />
+            <span>{isGj ? 'હાજરી પત્રક (Attendance)' : 'Mark Attendance'}</span>
+          </button>
+          <button
+            onClick={() => setActiveSubTab('marks')}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              activeSubTab === 'marks'
+                ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-800'
+                : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            <span>{isGj ? 'ટેસ્ટ ગુણ (Test Marks)' : 'Add Test Marks'}</span>
+          </button>
+        </div>
 
-            {/* Modal Box */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              className="relative w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl z-10"
-            >
-              {/* Close Button */}
-              <button
-                onClick={handleCloseModal}
-                className="absolute right-4 top-4 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 transition-colors focus:outline-none"
-              >
-                <X className="w-4 h-4" />
-              </button>
+        {/* Local Search input */}
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder={isGj ? 'નામ દ્વારા શોધો...' : 'Search student...'}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-205 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none transition-colors"
+          />
+        </div>
+      </div>
 
-              {/* Success Notification Banner */}
-              {successMsg && (
-                <div className="flex items-center space-x-2 p-3.5 mb-4 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-xs font-semibold animate-fadeIn">
-                  <CheckCircle className="h-4 w-4 shrink-0" />
-                  <span>{successMsg}</span>
-                </div>
-              )}
-
-              {/* Error Notification Banner */}
-              {errorMsg && (
-                <div className="flex items-center space-x-2 p-3.5 mb-4 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold animate-fadeIn">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
-              {/* Modal Headers */}
-              <div className="mb-6 text-left">
-                <span className="text-[10px] font-black uppercase text-[#8B5CF6] tracking-[0.2em] bg-[#8B5CF6]/10 px-2.5 py-0.5 rounded-full border border-[#8B5CF6]/20">
-                  {modalType === 'attendance' ? 'Attendance Control' : 'Test Grading'}
+      {/* Register Workspace Panel */}
+      <div className="glass-card rounded-3xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm flex flex-col">
+        {activeSubTab === 'attendance' ? (
+          /* ATTENDANCE SECTION */
+          <form onSubmit={handleBulkAttendanceSubmit} className="space-y-6">
+            {/* Attendance Filters */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-105 dark:border-slate-850/60 text-left">
+              <div className="space-y-1">
+                <span className="text-xs font-black text-slate-800 dark:text-slate-250 block">
+                  {isGj ? 'હાજરી તારીખ સેટ કરો' : 'Attendance Date'}
                 </span>
-                <h3 className="text-lg font-black mt-2 text-slate-900 dark:text-white">
-                  {selectedStudent.name}
-                </h3>
-                <p className="text-[10px] font-bold text-slate-400">
-                  Std. {selectedStudent.standard} | Subject: {user?.subject}
-                </p>
+                <span className="text-[10px] text-slate-400 block font-semibold">
+                  {isGj ? 'આ તારીખના ગ્રીડ ડેટા આપોઆપ લોડ થશે' : 'Existing entries for this date will pre-fill'}
+                </span>
+              </div>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={attendanceDate}
+                  onChange={(e) => setAttendanceDate(e.target.value)}
+                  required
+                  className="px-3.5 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Attendance Spreadsheet Grid */}
+            {loading ? (
+              <div className="py-20 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="text-center py-16 text-slate-405 dark:text-slate-550 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center space-y-2">
+                <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-700" />
+                <span className="text-xs font-semibold">{isGj ? 'કોઈ વિદ્યાર્થીઓ મળ્યા નથી.' : 'No students found in this branch & standard.'}</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-200 dark:border-slate-850 rounded-2xl">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                      <th className="py-3 px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
+                      <th className="py-3 px-6 text-center">{isGj ? 'હાજર (Present)' : 'Present'}</th>
+                      <th className="py-3 px-6 text-center">{isGj ? 'ગેરહાજર (Absent)' : 'Absent'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
+                    {filteredStudents.map((student) => {
+                      const currentStatus = gridAttendance[student._id] || 'present';
+                      return (
+                        <tr 
+                          key={student._id} 
+                          className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors"
+                        >
+                          <td className="py-4 px-6 font-bold text-slate-850 dark:text-slate-200 text-left">
+                            {student.name}
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex justify-center">
+                              <label className="relative flex items-center justify-center p-1 rounded-full hover:bg-emerald-500/10 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name={`status-${student._id}`}
+                                  checked={currentStatus === 'present'}
+                                  onChange={() => handleAttendanceChange(student._id, 'present')}
+                                  className="sr-only"
+                                />
+                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+                                  currentStatus === 'present'
+                                    ? 'bg-emerald-500 text-white border-emerald-500'
+                                    : 'border-slate-300 dark:border-slate-700'
+                                }`}>
+                                  {currentStatus === 'present' && <Check className="w-3.5 h-3.5" />}
+                                </div>
+                              </label>
+                            </div>
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex justify-center">
+                              <label className="relative flex items-center justify-center p-1 rounded-full hover:bg-red-500/10 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name={`status-${student._id}`}
+                                  checked={currentStatus === 'absent'}
+                                  onChange={() => handleAttendanceChange(student._id, 'absent')}
+                                  className="sr-only"
+                                />
+                                <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-all ${
+                                  currentStatus === 'absent'
+                                    ? 'bg-red-500 text-white border-red-500'
+                                    : 'border-slate-300 dark:border-slate-700'
+                                }`}>
+                                  {currentStatus === 'absent' && <X className="w-3.5 h-3.5" />}
+                                </div>
+                              </label>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Save Button */}
+            {students.length > 0 && !loading && (
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-6 py-3 text-xs font-black text-white bg-[#8B5CF6] hover:bg-[#7C3AED] rounded-xl transition-all shadow-md shadow-[#8B5CF6]/15 flex items-center space-x-2"
+                >
+                  {saving ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full"></span>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>{isGj ? 'હાજરી પત્રક સબમિટ કરો' : 'Submit Attendance Register'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </form>
+        ) : (
+          /* TEST MARKS SECTION */
+          <form onSubmit={handleBulkMarksSubmit} className="space-y-6">
+            {/* Test Info Entry selectors */}
+            <div className="grid sm:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-105 dark:border-slate-850/60 text-left">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  {isGj ? 'ટેસ્ટનું નામ દાખલ કરો' : 'Test / Exam Title'}
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Unit Test 1"
+                    value={testName}
+                    onChange={(e) => setTestName(e.target.value)}
+                    className="flex-grow px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={fetchStudentsAndExistingLogs}
+                    className="px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors shrink-0"
+                  >
+                    {isGj ? 'ડેટા લાવો' : 'Load Logs'}
+                  </button>
+                </div>
               </div>
 
-              {/* Attendance Form */}
-              {modalType === 'attendance' && (
-                <form onSubmit={handleMarkAttendance} className="space-y-4 text-left">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                      Attendance Date
-                    </label>
-                    <input
-                      type="date"
-                      value={attendanceDate}
-                      onChange={(e) => setAttendanceDate(e.target.value)}
-                      required
-                      className="w-full px-3 py-2 text-xs font-semibold bg-slate-50 dark:bg-slate-950 border border-slate-205 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
-                    />
-                  </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  {isGj ? 'કુલ ગુણ' : 'Total Marks'}
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  placeholder="50"
+                  value={totalMarks}
+                  onChange={(e) => setTotalMarks(e.target.value)}
+                  className="w-full px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                />
+              </div>
+            </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                      Status Option
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceStatus('present')}
-                        className={`py-2 text-xs font-black rounded-xl border transition-all ${
-                          attendanceStatus === 'present'
-                            ? 'bg-emerald-500/10 text-emerald-500 border-emerald-555/30'
-                            : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500'
-                        }`}
-                      >
-                        Present
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAttendanceStatus('absent')}
-                        className={`py-2 text-xs font-black rounded-xl border transition-all ${
-                          attendanceStatus === 'absent'
-                            ? 'bg-red-500/10 text-red-500 border-red-555/30'
-                            : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500'
-                        }`}
-                      >
-                        Absent
-                      </button>
-                    </div>
-                  </div>
+            {/* Marks Spreadsheet Grid */}
+            {loading ? (
+              <div className="py-20 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="text-center py-16 text-slate-405 dark:text-slate-550 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center space-y-2">
+                <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-700" />
+                <span className="text-xs font-semibold">{isGj ? 'કોઈ વિદ્યાર્થીઓ મળ્યા નથી.' : 'No students found. Enter test name and load.'}</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-200 dark:border-slate-850 rounded-2xl">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                      <th className="py-3 px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
+                      <th className="py-3 px-6 text-center">{isGj ? 'મેળવેલ ગુણ' : 'Marks Obtained'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
+                    {filteredStudents.map((student) => {
+                      const val = gridMarks[student._id] || '';
+                      return (
+                        <tr 
+                          key={student._id} 
+                          className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors"
+                        >
+                          <td className="py-4 px-6 font-bold text-slate-850 dark:text-slate-200 text-left">
+                            {student.name}
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex justify-center">
+                              <input
+                                type="number"
+                                min="0"
+                                max={totalMarks}
+                                placeholder="Ab"
+                                value={val}
+                                onChange={(e) => handleMarkChange(student._id, e.target.value)}
+                                className="w-20 px-2 py-1 text-center font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:border-blue-500 focus:outline-none"
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
-                  <button
-                    type="submit"
-                    disabled={formSubmitting}
-                    className="w-full py-2.5 mt-4 text-xs font-black text-white bg-[#8B5CF6] hover:bg-[#7C3AED] rounded-xl transition-all shadow-md shadow-[#8B5CF6]/10 flex items-center justify-center space-x-2"
-                  >
-                    {formSubmitting ? (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full"></span>
-                    ) : (
-                      <span>Record Attendance</span>
-                    )}
-                  </button>
-                </form>
-              )}
-
-              {/* Test Marks Form */}
-              {modalType === 'marks' && (
-                <form onSubmit={handleAddMarks} className="space-y-4 text-left">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                      Test Title Name
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Weekly Test 1, Unit Exam"
-                      value={testName}
-                      onChange={(e) => setTestName(e.target.value)}
-                      required
-                      className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                        Marks Obtained
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={marksObtained}
-                        onChange={(e) => setMarksObtained(e.target.value)}
-                        required
-                        className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
-                        Total Marks
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        placeholder="50"
-                        value={totalMarks}
-                        onChange={(e) => setTotalMarks(e.target.value)}
-                        required
-                        className="w-full px-3.5 py-2 text-xs font-semibold bg-slate-55 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={formSubmitting}
-                    className="w-full py-2.5 mt-4 text-xs font-black text-white bg-blue-500 hover:bg-blue-600 rounded-xl transition-all shadow-md shadow-blue-500/10 flex items-center justify-center space-x-2"
-                  >
-                    {formSubmitting ? (
-                      <span className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full"></span>
-                    ) : (
-                      <span>Save Score Record</span>
-                    )}
-                  </button>
-                </form>
-              )}
-            </motion.div>
-          </div>
+            {/* Save Button */}
+            {students.length > 0 && !loading && (
+              <div className="flex justify-end pt-2">
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-6 py-3 text-xs font-black text-white bg-blue-500 hover:bg-blue-600 rounded-xl transition-all shadow-md shadow-blue-500/15 flex items-center space-x-2"
+                >
+                  {saving ? (
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent animate-spin rounded-full"></span>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>{isGj ? 'ગુણ પત્રક સબમિટ કરો' : 'Submit Test Marks'}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </form>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }

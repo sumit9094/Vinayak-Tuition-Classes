@@ -4,7 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { BRANCHES } from '@/lib/constants';
+import { BRANCHES, STANDARDS } from '@/lib/constants';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -46,9 +46,9 @@ export async function POST(req: Request) {
 
     await connectDB();
     const body = await req.json();
-    const { name, email, phone, password, branches, subject } = body;
+    const { name, email, phone, password, branches, subject, standards } = body;
 
-    if (!name || !email || !phone || !password || !branches || !subject) {
+    if (!name || !email || !phone || !password || !branches || !subject || !standards) {
       return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
@@ -64,6 +64,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid branch selection' }, { status: 400 });
     }
 
+    // Validate standards array
+    if (!Array.isArray(standards) || standards.length === 0 || !standards.every(s => STANDARDS.includes(s))) {
+      return NextResponse.json({ error: 'Invalid standard selection' }, { status: 400 });
+    }
+
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -74,6 +79,7 @@ export async function POST(req: Request) {
       password: hashedPassword,
       role: 'teacher',
       branches,
+      standards,
       subject,
     });
 
@@ -86,6 +92,7 @@ export async function POST(req: Request) {
       phone: teacher.phone,
       role: teacher.role,
       branches: teacher.branches,
+      standards: teacher.standards,
       subject: teacher.subject,
       createdAt: teacher.createdAt,
     };

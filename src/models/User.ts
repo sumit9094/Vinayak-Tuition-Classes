@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
-import { BRANCHES } from '../lib/constants';
+import { BRANCHES, STANDARDS } from '../lib/constants';
 
 const UserSchema = new Schema(
   {
@@ -36,6 +36,17 @@ const UserSchema = new Schema(
           return v.every(b => BRANCHES.includes(b as any));
         },
         message: 'Invalid branch selection',
+      },
+      default: [],
+    },
+    standards: {
+      type: [String],
+      validate: {
+        validator: function (this: any, v: string[]) {
+          if (this.role === 'admin') return true;
+          return Array.isArray(v) && v.length > 0 && v.every(s => STANDARDS.includes(s as any));
+        },
+        message: 'At least one valid standard selection is required for teachers',
       },
       default: [],
     },

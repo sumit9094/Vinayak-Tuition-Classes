@@ -9,6 +9,7 @@ export interface User {
   type: 'student' | 'staff';
   role?: 'admin' | 'teacher';
   branches?: string[];
+  standards?: string[];
   branch?: string;
   subject?: string;
   standard?: string;

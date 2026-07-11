@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { connectDB } from '@/lib/mongodb';
 import Student from '@/models/Student';
 import jwt from 'jsonwebtoken';
+import { STANDARDS } from '@/lib/constants';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -29,6 +30,7 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const branchParam = searchParams.get('branch');
+    const standardParam = searchParams.get('standard');
 
     let query: any = {};
 
@@ -37,9 +39,13 @@ export async function GET(req: Request) {
       if (branchParam) {
         query.branch = branchParam;
       }
+      if (standardParam) {
+        query.standard = standardParam;
+      }
     } else if (session.role === 'teacher') {
-      // Teacher sees only students whose branch is in teacher's branches AND whose subjects array includes the teacher's subject
+      // Teacher sees only students whose branch is in teacher's branches AND whose standard is in teacher's standards AND whose subjects array includes the teacher's subject
       const teacherBranches = session.branches || [];
+      const teacherStandards = session.standards || [];
       const teacherSubject = session.subject;
       
       let branchQuery: any;
@@ -52,9 +58,21 @@ export async function GET(req: Request) {
       } else {
         branchQuery = { $in: teacherBranches };
       }
+
+      let standardQuery: any;
+      if (standardParam) {
+        if (teacherStandards.includes(standardParam)) {
+          standardQuery = standardParam;
+        } else {
+          return NextResponse.json({ error: 'Unauthorized standard access' }, { status: 403 });
+        }
+      } else {
+        standardQuery = { $in: teacherStandards };
+      }
       
       query = {
         branch: branchQuery,
+        standard: standardQuery,
         subjects: teacherSubject,
       };
     } else {
