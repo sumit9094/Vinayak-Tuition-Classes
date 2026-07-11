@@ -88,6 +88,27 @@ export default function AdminDashboardPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [reviewsPending, setReviewsPending] = useState<any[]>([]);
   const [reviewsApproved, setReviewsApproved] = useState<any[]>([]);
+
+  const tabTranslations: Record<'EN' | 'GJ', Record<string, string>> = {
+    EN: {
+      students: "students",
+      teachers: "teachers",
+      enquiries: "admissions / enquiries",
+      reviews: "reviews / testimonials",
+      attendance: "attendance",
+      marks: "marks",
+      fees: "fees"
+    },
+    GJ: {
+      students: "વિદ્યાર્થીઓ",
+      teachers: "શિક્ષકો",
+      enquiries: "પ્રવેશ પૂછપરછ",
+      reviews: "પ્રતિસાદ / સમીક્ષાઓ",
+      attendance: "હાજરી",
+      marks: "પરીક્ષા ગુણ",
+      fees: "ફી વિગતો"
+    }
+  };
   
   // Overview tables filter selections
   const [filterBranch, setFilterBranch] = useState<string>('VINAYAK 1 SHIVAM');
@@ -429,7 +450,7 @@ export default function AdminDashboardPage() {
                   : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              {tab === 'enquiries' ? 'admissions / enquiries' : tab === 'reviews' ? 'reviews / testimonials' : tab}
+              {tabTranslations[language as 'EN' | 'GJ']?.[tab] || tabTranslations['EN'][tab]}
             </button>
           ))}
         </div>

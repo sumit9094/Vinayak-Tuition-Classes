@@ -49,7 +49,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             </div>
             <div className="bg-[#8B5CF6]/10 text-[#8B5CF6] text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center border border-[#8B5CF6]/20">
               <GraduationCap className="w-2.5 h-2.5 mr-1" />
-              Student Portal
+              {language === 'GJ' ? 'વિદ્યાર્થી પોર્ટલ' : 'Student Portal'}
             </div>
           </Link>
 
@@ -78,20 +78,28 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-105/80 dark:bg-slate-900/60 text-slate-650 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors focus:outline-none"
+              className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-105/80 dark:bg-slate-900/60 text-slate-655 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors focus:outline-none cursor-pointer"
               aria-label="Toggle Theme"
             >
               {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
             </button>
 
-            {/* User Details & Logout */}
+            {/* User display & Sign Out */}
             <span className="hidden sm:inline-block text-xs font-bold text-slate-600 dark:text-slate-300 px-2 py-1 rounded bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
               {user?.name} (Std. {user?.standard})
             </span>
 
+            {/* Back to Home Button */}
+            <Link
+              href="/"
+              className="inline-flex items-center text-xs font-bold py-1.5 px-3 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-105/80 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-850/50 transition-colors"
+            >
+              <span>{language === 'GJ' ? 'હોમ પેજ' : 'Back to Home'}</span>
+            </Link>
+
             <button
               onClick={handleSignOut}
-              className="flex items-center space-x-1 text-xs font-bold py-1.5 px-3 rounded-full text-white bg-red-500 hover:bg-red-600 shadow-sm transition-colors focus:outline-none"
+              className="flex items-center space-x-1 text-xs font-bold py-1.5 px-3 rounded-full text-white bg-red-500 hover:bg-red-600 shadow-sm transition-colors focus:outline-none cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">{t('authLogoutBtn')}</span>
