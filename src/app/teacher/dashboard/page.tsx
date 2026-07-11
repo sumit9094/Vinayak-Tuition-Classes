@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { 
@@ -16,7 +17,8 @@ import {
   Calendar,
   Save,
   Check,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -261,7 +263,14 @@ export default function TeacherDashboardPage() {
     <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 text-left">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-start gap-3">
+          <Link
+            href="/"
+            className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-[#8B5CF6] dark:text-slate-400 dark:hover:text-white transition-all py-1.5 px-3 rounded-full bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm cursor-pointer mb-1.5"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>{isGj ? 'હોમ પેજ' : 'Back to Home'}</span>
+          </Link>
           <span className="text-[10px] font-black uppercase text-[#8B5CF6] tracking-[0.2em] bg-[#8B5CF6]/10 px-3 py-1 rounded-full border border-[#8B5CF6]/20">
             {isGj ? 'શિક્ષક કાર્યક્ષેત્ર' : 'Teacher Workspace'}
           </span>

@@ -92,17 +92,6 @@ export default function AuthCard({ children, title }: AuthCardProps) {
 
           {/* Form Content */}
           {children}
-
-          {/* Back to Home Link inside card */}
-          <div className="text-center mt-6 pt-4 border-t border-slate-100 dark:border-slate-850">
-            <Link
-              href="/"
-              className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-[#8B5CF6] dark:text-slate-400 dark:hover:text-[#8B5CF6] transition-colors"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>{t('authBackHome')}</span>
-            </Link>
-          </div>
         </motion.div>
       </div>
     </div>

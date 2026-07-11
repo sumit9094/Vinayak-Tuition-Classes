@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { 
@@ -14,7 +15,8 @@ import {
   AlertCircle,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  ArrowLeft
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -105,13 +107,15 @@ export default function StudentDashboardPage() {
     : 0;
 
   return (
-    <div className="container mx-auto px-6 py-10 max-w-5xl flex-grow flex flex-col justify-start">
-      {/* Welcome Banner */}
-      <motion.div 
-        initial={{ opacity: 0, y: -15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 text-left"
-      >
+    <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start text-left">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-col items-start gap-3">
+        <Link
+          href="/"
+          className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-[#8B5CF6] dark:text-slate-400 dark:hover:text-white transition-all py-1.5 px-3 rounded-full bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm cursor-pointer mb-1.5"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>{language === 'EN' ? 'Back to Home' : 'હોમ પેજ'}</span>
+        </Link>
         <span className="text-[10px] font-black uppercase text-[#8B5CF6] tracking-[0.2em] bg-[#8B5CF6]/10 px-3 py-1 rounded-full border border-[#8B5CF6]/20">
           {language === 'EN' ? 'Student Workspace' : 'વિદ્યાર્થી ક્ષેત્ર'}
         </span>
