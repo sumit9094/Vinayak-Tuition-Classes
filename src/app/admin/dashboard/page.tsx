@@ -22,7 +22,8 @@ import {
   DollarSign,
   AlertCircle,
   Check,
-  Award
+  Award,
+  ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -80,9 +81,10 @@ export default function AdminDashboardPage() {
   const { user, logout } = useAuth();
   const { language } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<'students' | 'teachers' | 'attendance' | 'marks' | 'fees'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'teachers' | 'enquiries' | 'attendance' | 'marks' | 'fees'>('students');
   const [students, setStudents] = useState<Student[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [enquiries, setEnquiries] = useState<any[]>([]);
   
   // Overview tables filter selections
   const [filterBranch, setFilterBranch] = useState<string>('VINAYAK 1 SHIVAM');
@@ -117,6 +119,8 @@ export default function AdminDashboardPage() {
       const studentsRes = await fetch('/api/students');
       // 2. Fetch Teachers
       const teachersRes = await fetch('/api/teachers');
+      // 3. Fetch Enquiries
+      const enquiriesRes = await fetch('/api/admission-enquiry');
 
       if (studentsRes.ok && teachersRes.ok) {
         const studentsData = await studentsRes.json();
@@ -125,6 +129,11 @@ export default function AdminDashboardPage() {
         setTeachers(teachersData.teachers || []);
       } else {
         setErrorMsg('Failed to load portal collections');
+      }
+
+      if (enquiriesRes.ok) {
+        const enquiriesData = await enquiriesRes.json();
+        setEnquiries(enquiriesData.enquiries || []);
       }
     } catch (err) {
       console.error(err);
@@ -355,7 +364,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
         {/* Navigation Tabs */}
         <div className="flex space-x-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-850 overflow-x-auto">
-          {(['students', 'teachers', 'attendance', 'marks', 'fees'] as const).map((tab) => (
+          {(['students', 'teachers', 'enquiries', 'attendance', 'marks', 'fees'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -365,7 +374,7 @@ export default function AdminDashboardPage() {
                   : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              {tab}
+              {tab === 'enquiries' ? 'admissions / enquiries' : tab}
             </button>
           ))}
         </div>
@@ -635,6 +644,73 @@ export default function AdminDashboardPage() {
                 </button>
               </form>
             </div>
+          </div>
+        )}
+
+        {/* Enquiries Tab */}
+        {activeTab === 'enquiries' && (
+          <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div className="text-left flex items-center space-x-2">
+                <ClipboardList className="w-5 h-5 text-[#8B5CF6]" />
+                <div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">Admission Enquiries Overview</h2>
+                  <p className="text-[10px] font-semibold text-slate-400">Incoming inquiries from the homepage form.</p>
+                </div>
+              </div>
+            </div>
+
+            {enquiries.length === 0 ? (
+              <div className="text-center py-16 text-slate-405 dark:text-slate-550 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center">
+                <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-700 mb-2" />
+                <span className="text-xs font-semibold">No inquiries submitted yet.</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-850">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                      <th className="py-3 px-4">Visitor Name</th>
+                      <th className="py-3 px-4">Contact</th>
+                      <th className="py-3 px-4">Requested Standard</th>
+                      <th className="py-3 px-4">Medium</th>
+                      <th className="py-3 px-4">Message</th>
+                      <th className="py-3 px-4">Received At</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
+                    {enquiries.map((enq) => (
+                      <tr key={enq._id} className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
+                        <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200">{enq.name}</td>
+                        <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-400">
+                          <a href={`tel:${enq.parentContact}`} className="hover:text-[#8B5CF6] transition-colors">{enq.parentContact}</a>
+                        </td>
+                        <td className="py-4 px-4 font-black text-[#8B5CF6]">{enq.standard}</td>
+                        <td className="py-4 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                            enq.medium === 'English' 
+                              ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20' 
+                              : 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
+                          }`}>
+                            {enq.medium}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 max-w-xs truncate text-slate-550 dark:text-slate-450" title={enq.message}>
+                          {enq.message || '-'}
+                        </td>
+                        <td className="py-4 px-4 text-slate-400 font-semibold">
+                          {new Date(enq.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

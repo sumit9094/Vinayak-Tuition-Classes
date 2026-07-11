@@ -31,7 +31,7 @@ export default function AdmissionForm() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/students', {
+      const response = await fetch('/api/admission-enquiry', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
