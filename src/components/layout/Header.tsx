@@ -197,8 +197,7 @@ export default function Header() {
           </button>
 
           {/* Language Toggle Button */}
-          <div className="relative flex items-center bg-slate-100/80 dark:bg-slate-900/60 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 rounded-full border border-slate-200 dark:border-slate-800 transition-colors">
-            <Globe className="w-4 h-4 text-slate-500 dark:text-slate-400 ml-2 mr-1.5" />
+          <div className="relative flex items-center bg-slate-100/80 dark:bg-slate-900/60 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 p-1.5 rounded-full border border-slate-200 dark:border-slate-800 transition-colors px-2">
             <button 
               onClick={() => setLanguage('EN')} 
               className={`text-xs font-black px-3 py-1 rounded-full transition-all duration-300 ${language === 'EN' ? 'bg-accentViolet text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'}`}

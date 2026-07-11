@@ -25,8 +25,7 @@ export default function AuthCard({ children, title }: AuthCardProps) {
       {/* Floating Settings Panel */}
       <div className="absolute top-6 right-6 flex items-center space-x-3 z-50">
         {/* Language selector */}
-        <div className="flex items-center bg-white/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm">
-          <Globe className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 ml-2 mr-1" />
+        <div className="flex items-center bg-white/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm backdrop-blur-sm px-1.5">
           <button
             onClick={() => setLanguage('EN')}
             className={`text-[10px] font-black px-2 py-1 rounded-full transition-all ${
@@ -93,6 +92,17 @@ export default function AuthCard({ children, title }: AuthCardProps) {
 
           {/* Form Content */}
           {children}
+
+          {/* Back to Home Link inside card */}
+          <div className="text-center mt-6 pt-4 border-t border-slate-100 dark:border-slate-850">
+            <Link
+              href="/"
+              className="inline-flex items-center space-x-1.5 text-xs font-bold text-slate-500 hover:text-[#8B5CF6] dark:text-slate-400 dark:hover:text-[#8B5CF6] transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>{t('authBackHome')}</span>
+            </Link>
+          </div>
         </motion.div>
       </div>
     </div>

@@ -56,8 +56,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
           {/* Quick Controls */}
           <div className="flex items-center space-x-3">
             {/* Language Selector */}
-            <div className="flex items-center bg-slate-105/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800">
-              <Globe className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 ml-1.5 mr-1" />
+            <div className="flex items-center bg-slate-105/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800 px-1.5">
               <button
                 onClick={() => setLanguage('EN')}
                 className={`text-[10px] font-black px-2 py-0.5 rounded-full transition-all ${
