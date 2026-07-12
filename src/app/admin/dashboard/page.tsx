@@ -89,6 +89,7 @@ export default function AdminDashboardPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [reviewsPending, setReviewsPending] = useState<any[]>([]);
   const [reviewsApproved, setReviewsApproved] = useState<any[]>([]);
+  const [fees, setFees] = useState<any[]>([]);
 
   const tabTranslations: Record<'EN' | 'GJ', Record<string, string>> = {
     EN: {
@@ -172,6 +173,13 @@ export default function AdminDashboardPage() {
       if (approvedRes.ok) {
         const data = await approvedRes.json();
         setReviewsApproved(data.reviews || []);
+      }
+
+      // 5. Fetch Fees
+      const feesRes = await fetch('/api/fees');
+      if (feesRes.ok) {
+        const feesData = await feesRes.json();
+        setFees(feesData.fees || []);
       }
     } catch (err) {
       console.error(err);
@@ -913,6 +921,84 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Fees Tab */}
+        {activeTab === 'fees' && (
+          <div className="space-y-6">
+            {/* Info Banner */}
+            <div className="flex items-start gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-xs font-semibold text-left">
+              <ClipboardList className="w-5 h-5 shrink-0 text-indigo-500 animate-pulse" />
+              <div>
+                <p className="font-bold">Module Under Construction</p>
+                <p className="text-[10px] text-slate-505 dark:text-slate-400 mt-0.5">
+                  Payment recording, WhatsApp reminders, and online payment options will be added here soon.
+                </p>
+              </div>
+            </div>
+
+            {/* Fees Table Card */}
+            <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div className="text-left flex items-center space-x-2">
+                  <DollarSign className="w-5 h-5 text-emerald-500" />
+                  <div>
+                    <h2 className="text-base font-black text-slate-900 dark:text-white">Annual Tuition Fees Status</h2>
+                    <p className="text-[10px] font-semibold text-slate-400">Overview of student fee liabilities, payments, and balances.</p>
+                  </div>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="py-16 flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8B5CF6]"></div>
+                </div>
+              ) : fees.length === 0 ? (
+                <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
+                  No student fee records found.
+                </div>
+              ) : (
+                <div className="overflow-x-auto w-full">
+                  <table className="min-w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                        <th className="py-3 px-4">Student Name</th>
+                        <th className="py-3 px-4">Branch</th>
+                        <th className="py-3 px-4">Standard</th>
+                        <th className="py-3 px-4">Total Due</th>
+                        <th className="py-3 px-4">Total Paid</th>
+                        <th className="py-3 px-4">Pending</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
+                      {fees.map((record) => (
+                        <tr key={record.studentId} className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
+                          <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200 text-left">
+                            {record.name}
+                          </td>
+                          <td className="py-4 px-4 font-semibold text-slate-655 dark:text-slate-400">
+                            {record.branch || <span className="text-slate-400">-</span>}
+                          </td>
+                          <td className="py-4 px-4 font-semibold text-slate-655 dark:text-slate-400">
+                            Std. {record.standard}
+                          </td>
+                          <td className="py-4 px-4 font-black text-slate-700 dark:text-slate-300">
+                            ₹{record.totalDue.toLocaleString()}
+                          </td>
+                          <td className="py-4 px-4 font-black text-emerald-600 dark:text-emerald-400">
+                            ₹{record.totalPaid.toLocaleString()}
+                          </td>
+                          <td className={`py-4 px-4 font-black ${record.pending > 0 ? 'text-red-500 dark:text-orange-400' : 'text-slate-500'}`}>
+                            ₹{record.pending.toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>

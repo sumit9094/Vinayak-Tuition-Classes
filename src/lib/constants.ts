@@ -6,3 +6,10 @@ export const SUBJECTS_BY_STANDARD: Record<string, string[]> = {
   "11": ["English", "Account", "Business Administration", "Economics", "Statistics"],
   "12": ["English", "Account", "Business Administration", "Economics", "Statistics"]
 };
+
+export const ANNUAL_FEE_BY_STANDARD: Record<string, number> = {
+  "9": 15000,
+  "10": 20000,
+  "11": 16000,
+  "12": 20000,
+};
