@@ -551,7 +551,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'teachers' && (
           <div className="grid md:grid-cols-3 gap-8">
             {/* Left: Teachers list */}
-            <div className="md:col-span-2 glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+            <div className="md:col-span-2 w-full overflow-hidden glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
               <h3 className="text-base font-black text-left text-slate-900 dark:text-white mb-6 flex items-center">
                 <Briefcase className="w-5 h-5 text-[#8B5CF6] mr-2" />
                 Teaching Faculty members
@@ -564,8 +564,8 @@ export default function AdminDashboardPage() {
               ) : filteredTeachers.length === 0 ? (
                 <p className="text-slate-400 py-10 text-xs font-semibold">No teachers registered.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                <div className="overflow-x-auto w-full">
+                  <table className="min-w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
                         <th className="py-3 px-4">Teacher Name</th>
