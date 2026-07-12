@@ -165,12 +165,12 @@ export default function Header() {
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 dark:bg-slate-950/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-850 py-3 shadow-lg shadow-black/5 dark:shadow-black/20' : 'bg-transparent py-5'}`}>
       <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
         {/* Logo / Brand Name */}
-        <a href="/" className="flex items-center group">
+        <Link href="/" className="flex items-center group">
           <div>
             <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight block">VINAYAK</span>
             <span className="text-[10px] font-bold text-accentCyan tracking-[0.2em] uppercase -mt-1 block">Tuition Classes</span>
           </div>
-        </a>
+        </Link>
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center space-x-8">
@@ -403,12 +403,12 @@ export default function Header() {
               {/* Top Bar: Logo & Close */}
               <div>
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
-                  <a href="/" onClick={() => setIsOpen(false)} className="flex items-center">
+                  <Link href="/" onClick={() => setIsOpen(false)} className="flex items-center">
                     <div>
                       <span className="text-lg font-black text-slate-900 dark:text-white tracking-tight block">VINAYAK</span>
                       <span className="text-[9px] font-bold text-accentCyan tracking-[0.2em] uppercase -mt-1 block">Tuition Classes</span>
                     </div>
-                  </a>
+                  </Link>
                   <button 
                     onClick={() => setIsOpen(false)}
                     className="text-slate-700 dark:text-white focus:outline-none p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors"

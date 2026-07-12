@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Phone } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -133,9 +134,12 @@ export default function Hero() {
               animate={{ y: [-8, 8, -8] }}
               transition={{ duration: 5, ease: "easeInOut", repeat: Infinity }}
             >
-              <img 
+              <Image 
                 src="/hero-main.jpg" 
                 alt="Vinayak Tuition Classes" 
+                width={500}
+                height={600}
+                priority
                 className="w-auto h-auto max-h-[250px] sm:max-h-[400px] lg:max-h-[500px] max-w-[85%] sm:max-w-none rounded-2xl border-4 border-white dark:border-slate-800 shadow-xl hover:scale-105 transition-transform duration-500"
               />
             </motion.div>

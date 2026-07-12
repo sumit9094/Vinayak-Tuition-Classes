@@ -1,6 +1,7 @@
 'use client';
 
 import { useLanguage } from '@/context/LanguageContext';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 
 export default function GalleryPage() {
@@ -48,10 +49,11 @@ export default function GalleryPage() {
                 transition={{ delay: index * 0.1 }}
                 className="relative overflow-hidden rounded-2xl shadow-lg group bg-slate-100 dark:bg-slate-800 break-inside-avoid"
               >
-                <img 
+                <Image 
                   src={img} 
                   alt={`Gallery Image ${index + 1}`} 
-                  loading="lazy"
+                  width={400}
+                  height={300}
                   className="w-full h-auto transition-transform duration-500 group-hover:scale-105"
                 />
               </motion.div>

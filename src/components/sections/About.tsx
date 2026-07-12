@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import SectionHeading from '../ui/SectionHeading';
 import GlassCard from '../ui/GlassCard';
@@ -107,9 +108,11 @@ export default function About() {
                       }}
                       className="absolute inset-0 p-4 flex items-center justify-center"
                     >
-                      <img 
+                      <Image 
                         src={slides[currentSlide]} 
                         alt="Vinayak Tuition Academic Achievements" 
+                        width={600}
+                        height={450}
                         className="max-w-full max-h-full object-contain rounded-xl border border-slate-200 dark:border-slate-800 shadow-md"
                       />
                     </motion.div>
