@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import { connectDB } from '@/lib/mongodb';
 import Student from '@/models/Student';
 import FeePayment from '@/models/FeePayment';
-import { ANNUAL_FEE_BY_STANDARD } from '@/lib/constants';
+import { MONTHLY_FEE_BY_STANDARD } from '@/lib/constants';
+import { getMonthsOwed } from '@/lib/feeUtils';
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -19,10 +20,11 @@ async function getSession() {
   }
 }
 
-// GET: Fetch student fees status (Protected - Admin only)
+// GET: Fetch student fees summary (Protected - Admin only)
 export async function GET(req: Request) {
   try {
     const session = await getSession();
+    // Teacher or Student accounts cannot access this general route
     if (!session || session.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
@@ -40,32 +42,49 @@ export async function GET(req: Request) {
     // Fetch students
     const students = await Student.find(filter).lean();
 
-    // Fetch all payments
-    const payments = await FeePayment.find({}).lean();
+    // Fetch all fee payment records
+    const allPayments = await FeePayment.find({}).lean();
 
-    // Map each student to their fee record summary
+    // Map each student to their computed monthly fee status
     const feeRecords = students.map((student: any) => {
-      const studentPayments = payments.filter(
-        (p: any) => p.studentId.toString() === student._id.toString()
+      const studentIdStr = student._id.toString();
+      
+      // Filter payments belonging to this student
+      const studentPayments = allPayments.filter(
+        (p: any) => p.studentId.toString() === studentIdStr
       );
-      const totalPaid = studentPayments.reduce((sum: number, p: any) => sum + p.amount, 0);
-      const std = student.standard || '';
-      const totalDue = ANNUAL_FEE_BY_STANDARD[std] || 0;
-      const pending = totalDue - totalPaid;
+      const paidMonths = studentPayments.map((p: any) => p.monthYear);
+
+      // Generate calendar months owed since student creation date
+      const joinDate = student.createdAt || new Date();
+      const monthsOwed = getMonthsOwed(joinDate);
+
+      // Compute pending calendar months
+      const pendingMonths = monthsOwed.filter((m) => !paidMonths.includes(m));
+
+      const standardRate = MONTHLY_FEE_BY_STANDARD[student.standard] || 0;
+      const totalPending = pendingMonths.length * standardRate;
+      const status = pendingMonths.length === 0 ? 'all_paid' : 'pending';
 
       return {
-        studentId: student._id,
+        studentId: studentIdStr,
         name: student.name,
-        standard: student.standard,
         branch: student.branch,
-        totalDue,
-        totalPaid,
-        pending,
+        standard: student.standard,
+        monthlyFee: standardRate,
+        pendingMonths,
+        totalPending,
+        status,
       };
     });
 
-    // Sort with highest pending first
-    feeRecords.sort((a, b) => b.pending - a.pending);
+    // Sort: "pending" status first, then by totalPending descending (most overdue first)
+    feeRecords.sort((a, b) => {
+      if (a.status !== b.status) {
+        return a.status === 'pending' ? -1 : 1;
+      }
+      return b.totalPending - a.totalPending;
+    });
 
     return NextResponse.json({ fees: feeRecords });
   } catch (error: any) {

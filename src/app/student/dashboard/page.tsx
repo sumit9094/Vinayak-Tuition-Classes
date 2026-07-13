@@ -16,9 +16,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  ArrowLeft
+  ArrowLeft,
+  DollarSign,
+  Check
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { MONTHLY_FEE_BY_STANDARD } from '@/lib/constants';
 
 interface AttendanceRecord {
   _id: string;
@@ -49,6 +52,17 @@ export default function StudentDashboardPage() {
   const [marks, setMarks] = useState<TestMarkRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Student fees breakdown
+  const [feesBreakdown, setFeesBreakdown] = useState<any[]>([]);
+  const [totalPendingFees, setTotalPendingFees] = useState<number>(0);
+
+  const formatMonthLabel = (monthYearStr: string) => {
+    if (!monthYearStr) return '';
+    const [year, month] = monthYearStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+  };
 
   // Set default subject on load
   useEffect(() => {
@@ -93,6 +107,27 @@ export default function StudentDashboardPage() {
 
     fetchSubjectData();
   }, [selectedSubject, user]);
+
+  // Fetch fees breakdown when student profile loads
+  useEffect(() => {
+    if (!user?._id) return;
+    const fetchFees = async () => {
+      try {
+        const res = await fetch(`/api/fees/${user._id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setFeesBreakdown(data.breakdown || []);
+          const pendingTotal = (data.breakdown || [])
+            .filter((b: any) => !b.paid)
+            .reduce((sum: number, b: any) => sum + b.amount, 0);
+          setTotalPendingFees(pendingTotal);
+        }
+      } catch (e) {
+        console.error('Fetch student fees error:', e);
+      }
+    };
+    fetchFees();
+  }, [user]);
 
   // Calculate statistics
   const totalClasses = attendance.length;
@@ -332,6 +367,88 @@ export default function StudentDashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Fees Section */}
+      {feesBreakdown.length > 0 && (
+        <div className="mt-8 glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm text-left">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div className="flex items-center space-x-2">
+              <DollarSign className="w-5 h-5 text-emerald-500" />
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  {language === 'EN' ? 'My Fees Status' : 'મારી ફી વિગતો'}
+                </h3>
+                <p className="text-[10px] font-semibold text-slate-400">
+                  {language === 'EN' ? 'Monthly tuition fee liabilities and payment history.' : 'માસિક ટ્યુશન ફી અને ચૂકવણીનો ઇતિહાસ.'}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-start sm:items-end gap-1">
+              <div className="text-xs font-bold text-slate-500">
+                {language === 'EN' ? 'Monthly Rate:' : 'માસિક ફી:'}{' '}
+                <span className="font-extrabold text-slate-800 dark:text-slate-200">
+                  ₹{(MONTHLY_FEE_BY_STANDARD[user?.standard || ''] || 0).toLocaleString()}
+                </span>
+              </div>
+              <div className={`text-xs font-bold ${totalPendingFees > 0 ? 'text-red-500 dark:text-orange-400' : 'text-emerald-500'}`}>
+                {language === 'EN' ? 'Total Pending:' : 'કુલ બાકી રકમ:'}{' '}
+                <span className="font-extrabold">₹{totalPendingFees.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto w-full">
+            <table className="min-w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                  <th className="py-3 px-4">Month</th>
+                  <th className="py-3 px-4">Rate / Amount</th>
+                  <th className="py-3 px-4">Payment Mode</th>
+                  <th className="py-3 px-4">Payment Date</th>
+                  <th className="py-3 px-4 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
+                {feesBreakdown.map((item) => (
+                  <tr key={item.monthYear} className="text-xs">
+                    <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200">
+                      {formatMonthLabel(item.monthYear)}
+                    </td>
+                    <td className="py-4 px-4 font-bold text-slate-655 dark:text-slate-400">
+                      ₹{item.amount.toLocaleString()}
+                    </td>
+                    <td className="py-4 px-4 font-semibold text-slate-600 dark:text-slate-400 capitalize">
+                      {item.paid ? item.mode : '-'}
+                    </td>
+                    <td className="py-4 px-4 font-semibold text-slate-500 dark:text-slate-500">
+                      {item.paid && item.paidAt ? new Date(item.paidAt).toLocaleDateString() : '-'}
+                    </td>
+                    <td className="py-4 px-4 text-right">
+                      <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        item.paid
+                          ? 'bg-emerald-500/10 text-emerald-555 border border-emerald-555/20'
+                          : 'bg-red-500/10 text-red-555 border border-red-555/20'
+                      }`}>
+                        {item.paid ? (
+                          <>
+                            <Check className="w-3 h-3" />
+                            <span>Paid</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-3 h-3" />
+                            <span>Pending</span>
+                          </>
+                        )}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

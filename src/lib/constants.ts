@@ -7,9 +7,9 @@ export const SUBJECTS_BY_STANDARD: Record<string, string[]> = {
   "12": ["English", "Account", "Business Administration", "Economics", "Statistics"]
 };
 
-export const ANNUAL_FEE_BY_STANDARD: Record<string, number> = {
-  "9": 15000,
-  "10": 20000,
-  "11": 16000,
-  "12": 20000,
+export const MONTHLY_FEE_BY_STANDARD: Record<string, number> = {
+  "9": 1500,
+  "10": 2000,
+  "11": 1600,
+  "12": 2000,
 };

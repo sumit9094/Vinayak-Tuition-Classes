@@ -25,7 +25,10 @@ import {
   Award,
   ClipboardList,
   Star,
-  ArrowLeft
+  ArrowLeft,
+  X,
+  Trash2,
+  MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -90,6 +93,117 @@ export default function AdminDashboardPage() {
   const [reviewsPending, setReviewsPending] = useState<any[]>([]);
   const [reviewsApproved, setReviewsApproved] = useState<any[]>([]);
   const [fees, setFees] = useState<any[]>([]);
+  
+  // Selected student details for fees modal
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [studentDetails, setStudentDetails] = useState<any | null>(null);
+  const [loadingDetails, setLoadingDetails] = useState<boolean>(false);
+  const [payingMonth, setPayingMonth] = useState<string | null>(null);
+  
+  // Fee payment form states
+  const [payAmount, setPayAmount] = useState<number>(0);
+  const [payMode, setPayMode] = useState<'cash' | 'upi'>('cash');
+  const [payNote, setPayNote] = useState<string>('');
+
+  const formatMonthLabel = (monthYearStr: string) => {
+    if (!monthYearStr) return '';
+    const [year, month] = monthYearStr.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1, 1);
+    return date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+  };
+
+  const handleViewDetails = async (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setLoadingDetails(true);
+    try {
+      const res = await fetch(`/api/fees/${studentId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStudentDetails(data);
+      }
+    } catch (e) {
+      console.error('Error fetching details:', e);
+    }
+    setLoadingDetails(false);
+  };
+
+  const handleSavePayment = async (monthYear: string) => {
+    if (payAmount <= 0) {
+      alert('Please enter a valid amount.');
+      return;
+    }
+    try {
+      const res = await fetch(`/api/fees/${selectedStudentId}/payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          monthYear,
+          amount: payAmount,
+          mode: payMode,
+          note: payNote,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStudentDetails({ ...studentDetails, breakdown: data.breakdown });
+        setPayingMonth(null);
+        // Refresh main list
+        const feesRes = await fetch('/api/fees');
+        if (feesRes.ok) {
+          const feesData = await feesRes.json();
+          setFees(feesData.fees || []);
+        }
+      } else {
+        alert(data.error || 'Failed to record payment');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error. Failed to save payment.');
+    }
+  };
+
+  const handleRemovePayment = async (monthYear: string) => {
+    if (!window.confirm(`Are you sure you want to delete the payment record for ${formatMonthLabel(monthYear)}?`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/fees/${selectedStudentId}/payments`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ monthYear }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStudentDetails({ ...studentDetails, breakdown: data.breakdown });
+        // Refresh main list
+        const feesRes = await fetch('/api/fees');
+        if (feesRes.ok) {
+          const feesData = await feesRes.json();
+          setFees(feesData.fees || []);
+        }
+      } else {
+        alert(data.error || 'Failed to remove payment');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error. Failed to delete payment.');
+    }
+  };
+
+  const handleSendReminder = (student: any, breakdown: any[]) => {
+    const pendingItems = breakdown.filter((b: any) => !b.paid);
+    const pendingMonthsLabels = pendingItems.map((b: any) => formatMonthLabel(b.monthYear));
+    const totalPendingAmount = pendingItems.reduce((sum: number, b: any) => sum + b.amount, 0);
+
+    const messageText = `Namaste, ${student.name} ki fee pending hai:\n${pendingMonthsLabels.join(', ')} — total ₹${totalPendingAmount}.\nKripya jaldi bhugtan karein. — Vinayak Tuition Classes`;
+
+    const parentPhone = student.parentContact || student.phone || '';
+    const cleanPhone = parentPhone.replace(/\D/g, '');
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+    const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`;
+    window.open(waLink, '_blank');
+  };
 
   const tabTranslations: Record<'EN' | 'GJ', Record<string, string>> = {
     EN: {
@@ -969,9 +1083,9 @@ export default function AdminDashboardPage() {
                         <th className="py-3 px-4">Student Name</th>
                         <th className="py-3 px-4">Branch</th>
                         <th className="py-3 px-4">Standard</th>
-                        <th className="py-3 px-4">Total Due</th>
-                        <th className="py-3 px-4">Total Paid</th>
-                        <th className="py-3 px-4">Pending</th>
+                        <th className="py-3 px-4">Monthly Fee</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -987,13 +1101,27 @@ export default function AdminDashboardPage() {
                             Std. {record.standard}
                           </td>
                           <td className="py-4 px-4 font-black text-slate-700 dark:text-slate-300">
-                            ₹{record.totalDue.toLocaleString()}
+                            ₹{record.monthlyFee.toLocaleString()}
                           </td>
-                          <td className="py-4 px-4 font-black text-emerald-600 dark:text-emerald-400">
-                            ₹{record.totalPaid.toLocaleString()}
+                          <td className="py-4 px-4">
+                            {record.status === 'all_paid' ? (
+                              <span className="inline-flex items-center space-x-1 text-emerald-600 dark:text-emerald-450 font-black">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-1"></span>
+                                All Paid
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-red-500 dark:text-orange-400 font-black">
+                                {record.pendingMonths.length} months pending (₹{record.totalPending.toLocaleString()})
+                              </span>
+                            )}
                           </td>
-                          <td className={`py-4 px-4 font-black ${record.pending > 0 ? 'text-red-500 dark:text-orange-400' : 'text-slate-500'}`}>
-                            ₹{record.pending.toLocaleString()}
+                          <td className="py-4 px-4 text-right">
+                            <button
+                              onClick={() => handleViewDetails(record.studentId)}
+                              className="px-3.5 py-1.5 rounded-xl text-xs font-black text-[#8B5CF6] bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 hover:bg-[#8B5CF6]/20 transition-all cursor-pointer shadow-sm"
+                            >
+                              View Details
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -1181,43 +1309,194 @@ export default function AdminDashboardPage() {
           </div>
         )}
 
-        {/* Fees Tab */}
-        {activeTab === 'fees' && (
-          <div className="glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-8 shadow-sm text-left max-w-2xl mx-auto">
-            <h3 className="text-base font-black text-slate-900 dark:text-white mb-6 flex items-center">
-              <DollarSign className="w-5 h-5 text-emerald-500 mr-2" />
-              Fees Collection & Installments Structure
-            </h3>
 
-            <div className="space-y-6">
-              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                Tuition fees structures are set according to standard and stream. Installments are divided into three parts throughout the academic session.
-              </p>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/30 dark:bg-slate-900/10">
-                  <span className="text-[10px] font-black text-[#8B5CF6] uppercase block">Secondary (Std. 9 & 10)</span>
-                  <span className="text-lg font-black text-slate-900 dark:text-white block mt-1">₹ 15,000 / Year</span>
-                  <span className="text-[9px] font-semibold text-slate-400 block mt-1">Payable in 3 installments of ₹ 5,000</span>
+      {/* Student Fees Detail Modal */}
+      <AnimatePresence>
+        {selectedStudentId && studentDetails && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden text-left"
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-950/20">
+                <div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    {studentDetails.student.name} — Fee Details
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-400 mt-0.5">
+                    Std. {studentDetails.student.standard} | {studentDetails.student.branch}
+                  </p>
                 </div>
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/30 dark:bg-slate-900/10">
-                  <span className="text-[10px] font-black text-blue-500 uppercase block">Commerce (Std. 11 & 12)</span>
-                  <span className="text-lg font-black text-slate-900 dark:text-white block mt-1">₹ 22,000 / Year</span>
-                  <span className="text-[9px] font-semibold text-slate-400 block mt-1">Payable in 3 installments of ₹ 7,333</span>
-                </div>
+                <button
+                  onClick={() => {
+                    setSelectedStudentId(null);
+                    setStudentDetails(null);
+                    setPayingMonth(null);
+                  }}
+                  className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="p-4 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-xl flex items-start space-x-2">
-                <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
-                <div className="space-y-0.5 text-xs font-semibold">
-                  <span className="block font-bold">Interactive Payments Management coming soon</span>
-                  <span className="block text-[10px] opacity-80">Online payments gateway and receipts downloading features will be enabled in the next update.</span>
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto flex-grow space-y-6">
+                {/* Actions & Reminder bar */}
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                  <span className="text-xs font-black uppercase tracking-wider text-slate-450">
+                    Monthly Ledger
+                  </span>
+                  
+                  {studentDetails.breakdown.some((b: any) => !b.paid) && (
+                    <button
+                      onClick={() => handleSendReminder(studentDetails.student, studentDetails.breakdown)}
+                      className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500 text-white hover:bg-emerald-600 transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Send Reminder</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Monthly list */}
+                <div className="space-y-4">
+                  {studentDetails.breakdown.map((item: any) => (
+                    <div 
+                      key={item.monthYear} 
+                      className="p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800/40 bg-slate-50/40 dark:bg-slate-900/10 space-y-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-black text-slate-800 dark:text-slate-200">
+                            {formatMonthLabel(item.monthYear)}
+                          </span>
+                          <span className="block text-[10px] font-bold text-slate-405 mt-0.5">
+                            Standard rate: ₹{item.amount.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center space-x-3">
+                          <span className={`inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            item.paid
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          }`}>
+                            {item.paid ? (
+                              <>
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Paid</span>
+                              </>
+                            ) : (
+                              <>
+                                <AlertCircle className="w-3.5 h-3.5" />
+                                <span>Pending</span>
+                              </>
+                            )}
+                          </span>
+
+                          {item.paid ? (
+                            <button
+                              onClick={() => handleRemovePayment(item.monthYear)}
+                              className="p-1 rounded-lg border border-red-200 dark:border-red-950/40 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Delete payment record"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            payingMonth !== item.monthYear && (
+                              <button
+                                onClick={() => {
+                                  setPayingMonth(item.monthYear);
+                                  setPayAmount(item.amount);
+                                  setPayMode('cash');
+                                  setPayNote('');
+                                }}
+                                className="px-3 py-1.5 rounded-xl text-[10px] font-black text-[#8B5CF6] bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 hover:bg-[#8B5CF6]/20 transition-all cursor-pointer"
+                              >
+                                Mark as Paid
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Inline form for marking payment */}
+                      {payingMonth === item.monthYear && (
+                        <motion.div 
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-3 items-end"
+                        >
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-400">Amount</label>
+                            <input
+                              type="number"
+                              value={payAmount}
+                              onChange={(e) => setPayAmount(Number(e.target.value))}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-400">Payment Mode</label>
+                            <select
+                              value={payMode}
+                              onChange={(e) => setPayMode(e.target.value as 'cash' | 'upi')}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                            >
+                              <option value="cash">Cash</option>
+                              <option value="upi">UPI / Online</option>
+                            </select>
+                          </div>
+
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-400">Note (Optional)</label>
+                            <input
+                              type="text"
+                              value={payNote}
+                              placeholder="Receipt ref, etc."
+                              onChange={(e) => setPayNote(e.target.value)}
+                              className="w-full px-3 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-3 flex justify-end space-x-2 mt-2">
+                            <button
+                              onClick={() => setPayingMonth(null)}
+                              className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-bold text-slate-550"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleSavePayment(item.monthYear)}
+                              className="px-4 py-1.5 rounded-lg text-xs font-black bg-[#8B5CF6] text-white hover:bg-[#8B5CF6]/90 transition-all cursor-pointer"
+                            >
+                              Record Payment
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+
+                      {/* Display payment details if paid */}
+                      {item.paid && (
+                        <div className="pt-2 border-t border-slate-200/40 dark:border-slate-800/40 text-[10px] font-semibold text-slate-500 flex flex-wrap gap-x-4 gap-y-1">
+                          <span>Mode: <strong className="text-slate-700 dark:text-slate-300 uppercase">{item.mode}</strong></span>
+                          <span>Date: <strong>{new Date(item.paidAt).toLocaleDateString()}</strong></span>
+                          {item.note && <span className="truncate">Note: <strong>{item.note}</strong></span>}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
-  );
+  </div>
+);
 }

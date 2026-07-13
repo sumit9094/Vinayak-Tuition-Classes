@@ -7,6 +7,16 @@ const FeePaymentSchema = new Schema(
       ref: 'Student',
       required: [true, 'Student ID is required'],
     },
+    monthYear: {
+      type: String,
+      required: [true, 'Month and Year (YYYY-MM) is required'],
+      validate: {
+        validator: function (v: string) {
+          return /^\d{4}-\d{2}$/.test(v);
+        },
+        message: 'Month and Year must be in YYYY-MM format',
+      },
+    },
     amount: {
       type: Number,
       required: [true, 'Amount is required'],
@@ -34,5 +44,8 @@ const FeePaymentSchema = new Schema(
     timestamps: true,
   }
 );
+
+// Add unique index so the same month cannot be recorded twice for the same student
+FeePaymentSchema.index({ studentId: 1, monthYear: 1 }, { unique: true });
 
 export default mongoose.models.FeePayment || mongoose.model('FeePayment', FeePaymentSchema);
