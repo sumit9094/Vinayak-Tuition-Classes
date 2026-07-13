@@ -105,6 +105,37 @@ export default function AdminDashboardPage() {
   const [payMode, setPayMode] = useState<'cash' | 'upi'>('cash');
   const [payNote, setPayNote] = useState<string>('');
 
+  // UPI settings states
+  const [upiId, setUpiId] = useState<string>('');
+  const [upiPayeeName, setUpiPayeeName] = useState<string>('');
+  const [savingSettings, setSavingSettings] = useState<boolean>(false);
+  const [settingsMessage, setSettingsMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const handleSaveUpiSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsMessage(null);
+    try {
+      const res = await fetch('/api/settings/upi', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ upiId, upiPayeeName }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSettingsMessage({ type: 'success', text: 'UPI settings saved successfully!' });
+        setUpiId(data.upiId);
+        setUpiPayeeName(data.upiPayeeName);
+      } else {
+        setSettingsMessage({ type: 'error', text: data.error || 'Failed to save settings' });
+      }
+    } catch (err) {
+      console.error(err);
+      setSettingsMessage({ type: 'error', text: 'Network error. Failed to save settings.' });
+    }
+    setSavingSettings(false);
+  };
+
   const formatMonthLabel = (monthYearStr: string) => {
     if (!monthYearStr) return '';
     const [year, month] = monthYearStr.split('-');
@@ -294,6 +325,14 @@ export default function AdminDashboardPage() {
       if (feesRes.ok) {
         const feesData = await feesRes.json();
         setFees(feesData.fees || []);
+      }
+
+      // 6. Fetch UPI Settings
+      const settingsRes = await fetch('/api/settings/upi');
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        setUpiId(settingsData.upiId || '');
+        setUpiPayeeName(settingsData.upiPayeeName || '');
       }
     } catch (err) {
       console.error(err);
@@ -1129,6 +1168,61 @@ export default function AdminDashboardPage() {
                   </table>
                 </div>
               )}
+            </div>
+
+            {/* UPI Settings Card */}
+            <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm text-left max-w-xl">
+              <h3 className="text-sm font-black text-slate-900 dark:text-white mb-4 flex items-center">
+                <ShieldAlert className="w-4 h-4 text-[#8B5CF6] mr-2" />
+                UPI Payment Settings
+              </h3>
+              <p className="text-[10px] font-semibold text-slate-400 mb-6">
+                Configure the UPI ID and Payee Name for student "Pay Now" deep links.
+              </p>
+
+              <form onSubmit={handleSaveUpiSettings} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">UPI ID</label>
+                    <input
+                      type="text"
+                      required
+                      value={upiId}
+                      onChange={(e) => setUpiId(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                      placeholder="e.g. chiragvinayak92281@okicici"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Payee Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={upiPayeeName}
+                      onChange={(e) => setUpiPayeeName(e.target.value)}
+                      className="w-full px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                      placeholder="e.g. Vinayak Tuition Classes"
+                    />
+                  </div>
+                </div>
+
+                {settingsMessage && (
+                  <p className={`text-[10px] font-bold ${settingsMessage.type === 'success' ? 'text-emerald-555' : 'text-red-555'}`}>
+                    {settingsMessage.text}
+                  </p>
+                )}
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    className="px-4 py-2 rounded-xl text-xs font-black bg-[#8B5CF6] text-white hover:bg-[#8B5CF6]/90 disabled:opacity-50 transition-all cursor-pointer"
+                  >
+                    {savingSettings ? 'Saving...' : 'Save Settings'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

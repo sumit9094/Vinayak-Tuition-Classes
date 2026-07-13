@@ -56,6 +56,7 @@ export default function StudentDashboardPage() {
   // Student fees breakdown
   const [feesBreakdown, setFeesBreakdown] = useState<any[]>([]);
   const [totalPendingFees, setTotalPendingFees] = useState<number>(0);
+  const [upiSettings, setUpiSettings] = useState<{ upiId: string, upiPayeeName: string } | null>(null);
 
   const formatMonthLabel = (monthYearStr: string) => {
     if (!monthYearStr) return '';
@@ -128,6 +129,22 @@ export default function StudentDashboardPage() {
     };
     fetchFees();
   }, [user]);
+
+  // Fetch UPI Settings
+  useEffect(() => {
+    const fetchUpiSettings = async () => {
+      try {
+        const res = await fetch('/api/settings/upi');
+        if (res.ok) {
+          const data = await res.json();
+          setUpiSettings(data);
+        }
+      } catch (e) {
+        console.error('Error fetching UPI settings:', e);
+      }
+    };
+    fetchUpiSettings();
+  }, []);
 
   // Calculate statistics
   const totalClasses = attendance.length;
@@ -394,6 +411,22 @@ export default function StudentDashboardPage() {
                 {language === 'EN' ? 'Total Pending:' : 'કુલ બાકી રકમ:'}{' '}
                 <span className="font-extrabold">₹{totalPendingFees.toLocaleString()}</span>
               </div>
+              
+              {upiSettings?.upiId && totalPendingFees > 0 && (
+                <button
+                  onClick={() => {
+                    const cleanName = (user?.name || 'Student').replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                    const tnParam = encodeURIComponent(`${cleanName}-Fee`);
+                    const pnParam = encodeURIComponent(upiSettings.upiPayeeName);
+                    const upiLink = `upi://pay?pa=${upiSettings.upiId}&pn=${pnParam}&am=${totalPendingFees}&cu=INR&tn=${tnParam}`;
+                    window.location.href = upiLink;
+                  }}
+                  className="mt-2 inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl text-xs font-black bg-emerald-500 text-white hover:bg-emerald-600 active:scale-95 transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+                >
+                  <DollarSign className="w-3.5 h-3.5" />
+                  <span>{language === 'EN' ? 'Pay Now' : 'હમણાં ચૂકવો'}</span>
+                </button>
+              )}
             </div>
           </div>
 
