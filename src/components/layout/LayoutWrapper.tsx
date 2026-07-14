@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import FloatingWhatsApp from '@/components/ui/FloatingWhatsApp';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -21,7 +22,17 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     <>
       {!isAuthOrDashboard && <Header />}
       <main className="flex-grow">
-        {children}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={pathname}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: 'easeOut' }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
       </main>
       {!isAuthOrDashboard && <FloatingWhatsApp />}
       {!isAuthOrDashboard && <Footer />}

@@ -22,6 +22,7 @@ import {
   Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SuccessOverlay from '@/components/ui/SuccessOverlay';
 
 interface Student {
   _id: string;
@@ -64,6 +65,11 @@ export default function TeacherDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [successOverlay, setSuccessOverlay] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+
+  const showSuccess = (message: string) => {
+    setSuccessOverlay({ show: true, message });
+  };
 
   // Form states
   const [attendanceDate, setAttendanceDate] = useState<string>(
@@ -206,11 +212,11 @@ export default function TeacherDashboardPage() {
       });
 
       if (response.ok) {
-        setSuccessMsg(
-          isGj
-            ? `${students.length} વિદ્યાર્થીઓની હાજરી સફળતાપૂર્વક સાચવવામાં આવી!`
-            : `Attendance saved for ${students.length} students successfully!`
-        );
+        const msg = isGj
+          ? `${students.length} વિદ્યાર્થીઓની હાજરી સફળતાપૂર્વક સાચવવામાં આવી!`
+          : `Attendance saved for ${students.length} students successfully!`;
+        setSuccessMsg(msg);
+        showSuccess(isGj ? 'હાજરી સાચવી!' : 'Attendance Saved!');
       } else {
         const data = await response.json();
         setErrorMsg(data.error || 'Failed to submit attendance logs');
@@ -268,11 +274,11 @@ export default function TeacherDashboardPage() {
       });
 
       if (response.ok) {
-        setSuccessMsg(
-          isGj
-            ? `${students.length} વિદ્યાર્થીઓના ગુણ સફળતાપૂર્વક સાચવવામાં આવ્યા!`
-            : `Test marks saved for ${students.length} students successfully!`
-        );
+        const msg = isGj
+          ? `${students.length} વિદ્યાર્થીઓના ગુણ સફળતાપૂર્વક સાચવવામાં આવ્યા!`
+          : `Test marks saved for ${students.length} students successfully!`;
+        setSuccessMsg(msg);
+        showSuccess(isGj ? 'ગુણ સાચવ્યા!' : 'Marks Saved!');
       } else {
         const data = await response.json();
         setErrorMsg(data.error || 'Failed to submit exam grades');
@@ -291,6 +297,7 @@ export default function TeacherDashboardPage() {
   );
 
   return (
+    <>
     <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 text-left">
@@ -693,5 +700,16 @@ export default function TeacherDashboardPage() {
         )}
       </div>
     </div>
+
+    {/* Success Overlay */}
+    <AnimatePresence>
+      {successOverlay.show && (
+        <SuccessOverlay
+          message={successOverlay.message}
+          onClose={() => setSuccessOverlay({ show: false, message: '' })}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }

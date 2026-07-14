@@ -31,6 +31,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SuccessOverlay from '@/components/ui/SuccessOverlay';
 
 interface Student {
   _id: string;
@@ -86,21 +87,21 @@ const SkeletonTable = () => (
   <div className="animate-pulse space-y-4">
     <div className="space-y-3">
       <div className="grid grid-cols-6 gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
       </div>
       {[...Array(5)].map((_, idx) => (
         <div key={idx} className="grid grid-cols-6 gap-4 py-3">
-          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
         </div>
       ))}
     </div>
@@ -119,12 +120,22 @@ const SkeletonCards = () => (
           <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded w-full"></div>
           <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded w-5/6"></div>
         </div>
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-850">
-          <div className="h-6 bg-slate-150 dark:bg-slate-800 rounded w-20"></div>
-          <div className="h-6 bg-slate-150 dark:bg-slate-800 rounded w-20"></div>
+        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-20"></div>
+          <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-20"></div>
         </div>
       </div>
     ))}
+  </div>
+);
+
+const EmptyState = ({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle?: string }) => (
+  <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center">
+    <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 mb-4">
+      <Icon className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+    </div>
+    <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{title}</p>
+    {subtitle && <p className="text-xs font-semibold text-slate-400 dark:text-slate-600 mt-1">{subtitle}</p>}
   </div>
 );
 
@@ -197,6 +208,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(`Student account "${studentName}" deleted successfully.`);
+        showSuccess(`Student "${studentName}" removed.`);
         fetchData();
       } else {
         setErrorMsg(data.error || 'Failed to delete student.');
@@ -216,6 +228,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(`Teacher account "${teacherName}" deleted successfully.`);
+        showSuccess(`Teacher "${teacherName}" removed.`);
         fetchData();
       } else {
         setErrorMsg(data.error || 'Failed to delete teacher.');
@@ -242,6 +255,7 @@ export default function AdminDashboardPage() {
             ? 'Enquiry marked as reviewed.' 
             : 'Enquiry marked as unreviewed.'
         );
+        if (!currentReviewed) showSuccess('Enquiry marked as reviewed!');
         fetchData();
       } else {
         setErrorMsg(data.error || 'Failed to update enquiry status.');
@@ -261,6 +275,7 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccessMsg(`Enquiry from "${visitorName}" deleted successfully.`);
+        showSuccess(`Enquiry from "${visitorName}" deleted.`);
         fetchData();
       } else {
         setErrorMsg(data.error || 'Failed to delete enquiry.');
@@ -400,9 +415,15 @@ export default function AdminDashboardPage() {
   const [marksRecords, setMarksRecords] = useState<TestMarkRecord[]>([]);
 
   const [loading, setLoading] = useState(true);
+  const [logsLoading, setLogsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [successOverlay, setSuccessOverlay] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+
+  const showSuccess = (message: string) => {
+    setSuccessOverlay({ show: true, message });
+  };
 
   // New Teacher Form States
   const [newTeacher, setNewTeacher] = useState({
@@ -490,6 +511,7 @@ export default function AdminDashboardPage() {
       });
       if (res.ok) {
         setSuccessMsg('Review approved successfully!');
+        showSuccess('Review approved and published!');
         fetchData();
       } else {
         const data = await res.json();
@@ -510,6 +532,7 @@ export default function AdminDashboardPage() {
       });
       if (res.ok) {
         setSuccessMsg('Review deleted successfully!');
+        showSuccess('Review deleted.');
         fetchData();
       } else {
         const data = await res.json();
@@ -520,16 +543,19 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Fetch attendance or marks logs when filters change
+  useEffect(() => {
+    fetchOverviewLogs();
+  }, [activeTab, filterBranch, filterSubject]);
+
   const fetchOverviewLogs = async () => {
     if (activeTab !== 'attendance' && activeTab !== 'marks') return;
     setErrorMsg(null);
+    setLogsLoading(true);
     try {
       const queryParams = new URLSearchParams({
         branch: filterBranch,
         subject: filterSubject,
       });
-
       const endpoint = activeTab === 'attendance' ? '/api/attendance' : '/api/marks';
       const res = await fetch(`${endpoint}?${queryParams.toString()}`);
       if (res.ok) {
@@ -545,12 +571,10 @@ export default function AdminDashboardPage() {
     } catch (err) {
       console.error(err);
       setErrorMsg('Failed to load filters data');
+    } finally {
+      setLogsLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchOverviewLogs();
-  }, [activeTab, filterBranch, filterSubject]);
 
   // Handle branch checkboxes for teacher creation
   const handleBranchCheckbox = (branchName: string) => {
@@ -841,7 +865,7 @@ export default function AdminDashboardPage() {
             {loading ? (
               <SkeletonTable />
             ) : filteredStudents.length === 0 ? (
-              <p className="text-slate-400 py-10 text-xs font-semibold">No student records found.</p>
+              <EmptyState icon={Users} title="No student records found." subtitle="Students will appear here once they register." />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -858,7 +882,7 @@ export default function AdminDashboardPage() {
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
                     {filteredStudents.map((st) => (
                       <tr key={st._id} className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
-                        <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200">
+                        <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">
                           <div className="space-y-0.5 text-left">
                             <span>{st.name}</span>
                             {!st.email && (
@@ -868,10 +892,10 @@ export default function AdminDashboardPage() {
                             )}
                           </div>
                         </td>
-                        <td className="py-4 px-4 font-semibold text-slate-655 dark:text-slate-400">
+                        <td className="py-4 px-4 font-semibold text-slate-600 dark:text-slate-400">
                           {st.branch || <span className="text-slate-400">-</span>}
                         </td>
-                        <td className="py-4 px-4 font-semibold text-slate-655 dark:text-slate-400">
+                        <td className="py-4 px-4 font-semibold text-slate-600 dark:text-slate-400">
                           Std. {st.standard}
                         </td>
                         <td className="py-4 px-4">
@@ -918,7 +942,7 @@ export default function AdminDashboardPage() {
               {loading ? (
                 <SkeletonTable />
               ) : filteredTeachers.length === 0 ? (
-                <p className="text-slate-400 py-10 text-xs font-semibold">No teachers registered.</p>
+                <EmptyState icon={Briefcase} title="No teachers registered." subtitle="Add faculty using the form below." />
               ) : (
                 <div className="overflow-x-auto w-full">
                   <table className="min-w-full text-left border-collapse">
@@ -935,7 +959,7 @@ export default function AdminDashboardPage() {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
                       {filteredTeachers.map((tch) => (
                         <tr key={tch._id} className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
-                          <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200 text-left">
+                          <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200 text-left">
                             <div className="space-y-0.5">
                               <span className="block">{tch.name}</span>
                               <span className="block text-[10px] text-slate-400 font-semibold">{tch.email}</span>
@@ -1113,10 +1137,7 @@ export default function AdminDashboardPage() {
             {loading ? (
               <SkeletonTable />
             ) : enquiries.length === 0 ? (
-              <div className="text-center py-16 text-slate-405 dark:text-slate-550 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center">
-                <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-700 mb-2" />
-                <span className="text-xs font-semibold">No inquiries submitted yet.</span>
-              </div>
+              <EmptyState icon={ClipboardList} title="No enquiries submitted yet." subtitle="Visitor inquiries from the homepage form will appear here." />
             ) : (
               <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-850">
                 <table className="w-full text-left border-collapse">
@@ -1135,7 +1156,7 @@ export default function AdminDashboardPage() {
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
                     {enquiries.map((enq) => (
                       <tr key={enq._id} className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
-                        <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200">{enq.name}</td>
+                        <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200">{enq.name}</td>
                         <td className="py-4 px-4 font-bold text-slate-650 dark:text-slate-400">
                           <a href={`tel:${enq.parentContact}`} className="hover:text-[#8B5CF6] transition-colors">{enq.parentContact}</a>
                         </td>
@@ -1174,7 +1195,7 @@ export default function AdminDashboardPage() {
                               onClick={() => handleToggleEnquiryReviewed(enq._id, enq.reviewed)}
                               className={`px-2 py-1 rounded-lg border text-[10px] font-black transition-colors cursor-pointer ${
                                 enq.reviewed 
-                                  ? 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-855 text-slate-500 hover:bg-slate-200/50' 
+                                  ? 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-200/50' 
                                   : 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20 text-[#8B5CF6] hover:bg-[#8B5CF6]/20'
                               }`}
                               title={enq.reviewed ? "Mark as New" : "Mark as Reviewed"}
@@ -1183,7 +1204,7 @@ export default function AdminDashboardPage() {
                             </button>
                             <button
                               onClick={() => handleDeleteEnquiry(enq._id, enq.name)}
-                              className="p-1.5 rounded-lg border border-red-200 dark:border-red-955/40 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/40 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
                               title="Delete Enquiry"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -1203,7 +1224,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'reviews' && (
           <div className="space-y-8">
             {/* Pending Reviews Card */}
-            <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+            <div className="glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div className="text-left flex items-center space-x-2">
                   <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
@@ -1220,16 +1241,14 @@ export default function AdminDashboardPage() {
               {loading ? (
                 <SkeletonCards />
               ) : reviewsPending.length === 0 ? (
-                <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
-                  No pending reviews found.
-                </div>
+                <EmptyState icon={Star} title="No pending reviews." subtitle="New visitor testimonials awaiting approval will appear here." />
               ) : (
                 <div className="grid sm:grid-cols-2 gap-4">
                   {reviewsPending.map((rev) => (
                     <div key={rev._id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between text-left space-y-4 shadow-sm">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-855 dark:text-slate-200">{rev.name}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{rev.name}</span>
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <Star
@@ -1237,15 +1256,15 @@ export default function AdminDashboardPage() {
                                 className={`w-3.5 h-3.5 ${
                                   i < rev.rating
                                     ? 'text-amber-500 fill-amber-500'
-                                    : 'text-slate-350 dark:text-slate-700'
+                                    : 'text-slate-300 dark:text-slate-700'
                                 }`}
                               />
                             ))}
                           </div>
                         </div>
-                        <p className="text-xs text-slate-655 dark:text-slate-400 italic">"{rev.message}"</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 italic">"{rev.message}"</p>
                       </div>
-                      <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-850">
+                      <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                         <button
                           onClick={() => handleDeleteReview(rev._id)}
                           className="px-3 py-1.5 text-[10px] font-black text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-colors cursor-pointer"
@@ -1266,7 +1285,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Approved Reviews Card */}
-            <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
+            <div className="glass-card rounded-2xl border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
                 <div className="text-left flex items-center space-x-2">
                   <Check className="w-5 h-5 text-emerald-500" />
@@ -1281,16 +1300,14 @@ export default function AdminDashboardPage() {
               </div>
 
               {reviewsApproved.length === 0 ? (
-                <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
-                  No approved reviews yet.
-                </div>
+                <EmptyState icon={Check} title="No approved testimonials yet." subtitle="Approved reviews will be visible on the homepage." />
               ) : (
                 <div className="grid sm:grid-cols-2 gap-4">
                   {reviewsApproved.map((rev) => (
                     <div key={rev._id} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col justify-between text-left space-y-4 shadow-sm">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-slate-855 dark:text-slate-200">{rev.name}</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{rev.name}</span>
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
                               <Star
@@ -1298,13 +1315,13 @@ export default function AdminDashboardPage() {
                                 className={`w-3.5 h-3.5 ${
                                   i < rev.rating
                                     ? 'text-amber-500 fill-amber-500'
-                                    : 'text-slate-350 dark:text-slate-700'
+                                    : 'text-slate-300 dark:text-slate-700'
                                 }`}
                               />
                             ))}
                           </div>
                         </div>
-                        <p className="text-xs text-slate-655 dark:text-slate-400 italic">"{rev.message}"</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 italic">"{rev.message}"</p>
                       </div>
                       <div className="flex justify-end pt-2 border-t border-slate-100 dark:border-slate-850">
                         <button
@@ -1349,13 +1366,9 @@ export default function AdminDashboardPage() {
               </div>
 
               {loading ? (
-                <div className="py-16 flex justify-center items-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8B5CF6]"></div>
-                </div>
+                <SkeletonTable />
               ) : fees.length === 0 ? (
-                <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
-                  No student fee records found.
-                </div>
+                <EmptyState icon={DollarSign} title="No fee records found." subtitle="Student fee details will appear here once configured." />
               ) : (
                 <div className="overflow-x-auto w-full">
                   <table className="min-w-full text-left border-collapse">
@@ -1372,13 +1385,13 @@ export default function AdminDashboardPage() {
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
                       {fees.map((record) => (
                         <tr key={record.studentId} className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors">
-                          <td className="py-4 px-4 font-bold text-slate-855 dark:text-slate-200 text-left">
+                          <td className="py-4 px-4 font-bold text-slate-800 dark:text-slate-200 text-left">
                             {record.name}
                           </td>
-                          <td className="py-4 px-4 font-semibold text-slate-655 dark:text-slate-400">
+                          <td className="py-4 px-4 font-semibold text-slate-600 dark:text-slate-400">
                             {record.branch || <span className="text-slate-400">-</span>}
                           </td>
-                          <td className="py-4 px-4 font-semibold text-slate-655 dark:text-slate-400">
+                          <td className="py-4 px-4 font-semibold text-slate-600 dark:text-slate-400">
                             Std. {record.standard}
                           </td>
                           <td className="py-4 px-4 font-black text-slate-700 dark:text-slate-300">
@@ -1830,6 +1843,16 @@ export default function AdminDashboardPage() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Overlay */}
+      <AnimatePresence>
+        {successOverlay.show && (
+          <SuccessOverlay
+            message={successOverlay.message}
+            onClose={() => setSuccessOverlay({ show: false, message: '' })}
+          />
         )}
       </AnimatePresence>
     </div>

@@ -57,7 +57,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Quick Controls */}
           <div className="flex items-center space-x-3">
             {/* Language Selector */}
-            <div className="flex items-center bg-slate-105/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800 px-1.5">
+            <div className="flex items-center bg-slate-100/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800 px-1.5">
               <button
                 onClick={() => setLanguage('EN')}
                 className={`text-[10px] font-black px-2 py-0.5 rounded-full transition-all ${
@@ -79,7 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-105/80 dark:bg-slate-900/60 text-slate-655 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors focus:outline-none cursor-pointer"
+              className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100/80 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors focus:outline-none cursor-pointer"
               aria-label="Toggle Theme"
             >
               {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
