@@ -136,6 +136,50 @@ export default function AdminDashboardPage() {
     setSavingSettings(false);
   };
 
+  // Student & Teacher tab filter states
+  const [studentBranchFilter, setStudentBranchFilter] = useState<string>('');
+  const [studentStandardFilter, setStudentStandardFilter] = useState<string>('');
+  const [teacherBranchFilter, setTeacherBranchFilter] = useState<string>('');
+  const [teacherStandardFilter, setTeacherStandardFilter] = useState<string>('');
+
+  const handleDeleteStudent = async (studentId: string, studentName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete student "${studentName}"? This action cannot be undone.`)) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/students/${studentId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(`Student account "${studentName}" deleted successfully.`);
+        fetchData();
+      } else {
+        setErrorMsg(data.error || 'Failed to delete student.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Network error. Failed to delete student.');
+    }
+  };
+
+  const handleDeleteTeacher = async (teacherId: string, teacherName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete teacher "${teacherName}"? This action cannot be undone.`)) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/teachers/${teacherId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(`Teacher account "${teacherName}" deleted successfully.`);
+        fetchData();
+      } else {
+        setErrorMsg(data.error || 'Failed to delete teacher.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Network error. Failed to delete teacher.');
+    }
+  };
+
   const formatMonthLabel = (monthYearStr: string) => {
     if (!monthYearStr) return '';
     const [year, month] = monthYearStr.split('-');
@@ -485,19 +529,22 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Search filtering
-  const filteredStudents = students.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.standard.includes(searchQuery) ||
-      (s.branch || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Search and dropdown filtering
+  const filteredStudents = students.filter((s) => {
+    const matchesSearch = s.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesBranch = studentBranchFilter ? s.branch === studentBranchFilter : true;
+    const matchesStandard = studentStandardFilter ? s.standard === studentStandardFilter : true;
+    return matchesSearch && matchesBranch && matchesStandard;
+  });
 
-  const filteredTeachers = teachers.filter(
-    (t) =>
+  const filteredTeachers = teachers.filter((t) => {
+    const matchesSearch = 
       t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.subject.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      t.subject.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesBranch = teacherBranchFilter ? (t.branches || []).includes(teacherBranchFilter) : true;
+    const matchesStandard = teacherStandardFilter ? (t.standards || []).includes(teacherStandardFilter) : true;
+    return matchesSearch && matchesBranch && matchesStandard;
+  });
 
   const branchOptions = ["VINAYAK 1 SHIVAM", "VINAYAK 2 RAILWAY EAST"];
   const allSubjects = ["English", "Maths", "Social Science", "Science", "Account", "Business Administration", "Economics", "Statistics"];
@@ -624,17 +671,50 @@ export default function AdminDashboardPage() {
           ))}
         </div>
 
-        {/* Universal Search Bar (Visible only for student/teacher tabs) */}
+        {/* Universal Search Bar & Dropdown Filters */}
         {(activeTab === 'students' || activeTab === 'teachers') && (
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder={activeTab === 'students' ? 'Search students...' : 'Search teachers...'}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none transition-colors"
-            />
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-start sm:items-center">
+            {/* Search Input */}
+            <div className="relative w-full sm:w-56">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder={activeTab === 'students' ? 'Search by name...' : 'Search by name/subject...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Branch Filter */}
+            <select
+              value={activeTab === 'students' ? studentBranchFilter : teacherBranchFilter}
+              onChange={(e) => {
+                if (activeTab === 'students') setStudentBranchFilter(e.target.value);
+                else setTeacherBranchFilter(e.target.value);
+              }}
+              className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none w-full sm:w-auto"
+            >
+              <option value="">All Branches</option>
+              {branchOptions.map((br, idx) => (
+                <option key={idx} value={br}>{br}</option>
+              ))}
+            </select>
+
+            {/* Standard Filter */}
+            <select
+              value={activeTab === 'students' ? studentStandardFilter : teacherStandardFilter}
+              onChange={(e) => {
+                if (activeTab === 'students') setStudentStandardFilter(e.target.value);
+                else setTeacherStandardFilter(e.target.value);
+              }}
+              className="px-3 py-2 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none w-full sm:w-auto"
+            >
+              <option value="">All Standards</option>
+              {["9", "10", "11", "12"].map((std, idx) => (
+                <option key={idx} value={std}>Std. {std}</option>
+              ))}
+            </select>
           </div>
         )}
       </div>
@@ -665,6 +745,7 @@ export default function AdminDashboardPage() {
                       <th className="py-3 px-4">Standard</th>
                       <th className="py-3 px-4">Subjects (Auto)</th>
                       <th className="py-3 px-4">Phone</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -698,6 +779,15 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="py-4 px-4 font-bold text-slate-500 dark:text-slate-500">
                           {st.phone || st.parentContact || 'N/A'}
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <button
+                            onClick={() => handleDeleteStudent(st._id, st.name)}
+                            className="p-1.5 rounded-lg border border-red-200 dark:border-red-950/40 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                            title="Delete Student Account"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -734,6 +824,7 @@ export default function AdminDashboardPage() {
                         <th className="py-3 px-4">Branches</th>
                         <th className="py-3 px-4">Standards</th>
                         <th className="py-3 px-4">Phone</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -768,6 +859,15 @@ export default function AdminDashboardPage() {
                           </td>
                           <td className="py-4 px-4 font-bold text-slate-500 dark:text-slate-500">
                             {tch.phone}
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <button
+                              onClick={() => handleDeleteTeacher(tch._id, tch.name)}
+                              className="p-1.5 rounded-lg border border-red-200 dark:border-red-950/40 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Delete Teacher Account"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </td>
                         </tr>
                       ))}
