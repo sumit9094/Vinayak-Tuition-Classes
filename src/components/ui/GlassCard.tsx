@@ -23,10 +23,9 @@ export default function GlassCard({ children, className, delay = 0, hoverGlow = 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6, delay }}
-      whileHover={hoverGlow ? { y: -8, scale: 1.01 } : {}}
       className={cn(
-        "glass-card rounded-2xl p-6 relative overflow-hidden group",
-        hoverGlow && "hover:shadow-[0_20px_50px_rgba(124,58,237,0.15)] hover:border-accentViolet/30 transition-all duration-500",
+        "glass-card rounded-2xl p-6 relative overflow-hidden group transition-all duration-500",
+        hoverGlow && "hover:shadow-[0_20px_50px_rgba(124,58,237,0.15)] hover:border-accentViolet/30 hover:-translate-y-2 hover:scale-[1.01]",
         className
       )}
     >
