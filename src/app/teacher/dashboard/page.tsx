@@ -18,7 +18,8 @@ import {
   Save,
   Check,
   X,
-  ArrowLeft
+  ArrowLeft,
+  Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -38,10 +39,23 @@ export default function TeacherDashboardPage() {
   const isGj = language === 'GJ';
 
   const assignedBranches = user?.branches || [];
-  const assignedStandards = user?.standards || [];
+  const assignedStandards = user?.role === 'admin' 
+    ? ["9", "10", "12"] 
+    : (user?.standards || []);
+
+  const getAvailableSubjects = (std: string): string[] => {
+    if (user?.role === 'admin') {
+      if (std === '9') return ['Maths'];
+      if (std === '10') return ['Maths', 'English'];
+      if (std === '12') return ['English'];
+      return ['Maths', 'English'];
+    }
+    return [user?.subject].filter(Boolean) as string[];
+  };
 
   const [activeBranch, setActiveBranch] = useState<string>('');
   const [activeStandard, setActiveStandard] = useState<string>('');
+  const [activeSubject, setActiveSubject] = useState<string>('');
   const [activeSubTab, setActiveSubTab] = useState<'attendance' | 'marks'>('attendance');
   
   const [students, setStudents] = useState<Student[]>([]);
@@ -72,17 +86,34 @@ export default function TeacherDashboardPage() {
     }
   }, [assignedBranches, activeBranch, assignedStandards, activeStandard]);
 
+  // Update active subject when standard changes
+  useEffect(() => {
+    if (activeStandard) {
+      const avail = getAvailableSubjects(activeStandard);
+      if (avail.length > 0) {
+        if (!avail.includes(activeSubject)) {
+          setActiveSubject(avail[0]);
+        }
+      } else {
+        setActiveSubject('');
+      }
+    } else {
+      setActiveSubject('');
+    }
+  }, [activeStandard, activeSubject]);
+
   // Fetch student list and existing records when branch, standard, tab, date, or sync action changes
   const fetchStudentsAndExistingLogs = async () => {
-    if (!activeBranch || !activeStandard || !user?.subject) return;
+    const currentSubject = activeSubject || user?.subject;
+    if (!activeBranch || !activeStandard || !currentSubject) return;
     setLoading(true);
     setErrorMsg(null);
     setSuccessMsg(null);
 
     try {
-      // 1. Fetch Students matching branch and standard
+      // 1. Fetch Students matching branch, standard, and subject
       const studentRes = await fetch(
-        `/api/students?branch=${encodeURIComponent(activeBranch)}&standard=${activeStandard}`
+        `/api/students?branch=${encodeURIComponent(activeBranch)}&standard=${activeStandard}&subject=${encodeURIComponent(currentSubject)}`
       );
       if (!studentRes.ok) throw new Error('Failed to load student list');
       const studentData = await studentRes.json();
@@ -100,7 +131,7 @@ export default function TeacherDashboardPage() {
       // 3. Fetch existing logs to pre-fill
       if (activeSubTab === 'attendance') {
         const attRes = await fetch(
-          `/api/attendance?branch=${encodeURIComponent(activeBranch)}&subject=${encodeURIComponent(user.subject)}&date=${attendanceDate}`
+          `/api/attendance?branch=${encodeURIComponent(activeBranch)}&subject=${encodeURIComponent(currentSubject)}&date=${attendanceDate}`
         );
         if (attRes.ok) {
           const attData = await attRes.json();
@@ -112,7 +143,7 @@ export default function TeacherDashboardPage() {
         }
       } else if (activeSubTab === 'marks' && testName.trim()) {
         const marksRes = await fetch(
-          `/api/marks?branch=${encodeURIComponent(activeBranch)}&subject=${encodeURIComponent(user.subject)}&testName=${encodeURIComponent(testName.trim())}`
+          `/api/marks?branch=${encodeURIComponent(activeBranch)}&subject=${encodeURIComponent(currentSubject)}&testName=${encodeURIComponent(testName.trim())}`
         );
         if (marksRes.ok) {
           const marksData = await marksRes.json();
@@ -139,7 +170,7 @@ export default function TeacherDashboardPage() {
 
   useEffect(() => {
     fetchStudentsAndExistingLogs();
-  }, [activeBranch, activeStandard, activeSubTab, attendanceDate]);
+  }, [activeBranch, activeStandard, activeSubject, activeSubTab, attendanceDate]);
 
   const handleAttendanceChange = (studentId: string, status: 'present' | 'absent') => {
     setGridAttendance(prev => ({ ...prev, [studentId]: status }));
@@ -168,7 +199,7 @@ export default function TeacherDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           branch: activeBranch,
-          subject: user?.subject,
+          subject: activeSubject || user?.subject,
           date: attendanceDate,
           records: recordsArray,
         }),
@@ -229,7 +260,7 @@ export default function TeacherDashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           branch: activeBranch,
-          subject: user?.subject,
+          subject: activeSubject || user?.subject,
           testName: testName.trim(),
           totalMarks: Number(totalMarks),
           records: recordsArray,
@@ -278,7 +309,7 @@ export default function TeacherDashboardPage() {
             Hello, {user?.name}!
           </h1>
           <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
-            {isGj ? 'વિષય: ' : 'Subject: '}<strong className="text-[#8B5CF6]">{user?.subject}</strong> | {isGj ? 'વિદ્યાર્થીઓ અને શૈક્ષણિક રેકોર્ડનું સંચાલન.' : 'Manage student attendance and test marks in bulk.'}
+            {isGj ? 'વિષય: ' : 'Subject: '}<strong className="text-[#8B5CF6]">{activeSubject || user?.subject || '-'}</strong> | {isGj ? 'વિદ્યાર્થીઓ અને શૈક્ષણિક રેકોર્ડનું સંચાન.' : 'Manage student attendance and test marks in bulk.'}
           </p>
         </motion.div>
       </div>
@@ -298,8 +329,8 @@ export default function TeacherDashboardPage() {
         </div>
       )}
 
-      {/* Selectors Grid (Branch & Standard) */}
-      <div className="grid md:grid-cols-2 gap-6 mb-8 text-left">
+      {/* Selectors Grid (Branch & Standard & Subject) */}
+      <div className="grid md:grid-cols-3 gap-6 mb-8 text-left">
         {/* Branch Selection */}
         <div className="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md">
           <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-3">
@@ -347,6 +378,34 @@ export default function TeacherDashboardPage() {
                 </span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Subject Selection */}
+        <div className="glass-card rounded-2xl p-5 border border-slate-200 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block mb-3">
+            {isGj ? 'સક્રિય વિષય (Subject):' : 'Select Subject:'}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {getAvailableSubjects(activeStandard).map((sub) => (
+              <button
+                key={sub}
+                onClick={() => setActiveSubject(sub)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all border shrink-0 ${
+                  activeSubject === sub
+                    ? 'bg-[#8B5CF6] text-white border-[#8B5CF6] shadow-md shadow-[#8B5CF6]/10'
+                    : 'bg-white dark:bg-slate-900 border-slate-205 dark:border-slate-800 text-slate-700 dark:text-slate-350 hover:bg-slate-50'
+                }`}
+              >
+                <span className="flex items-center space-x-1.5">
+                  <Globe className="w-3.5 h-3.5" />
+                  <span>{sub}</span>
+                </span>
+              </button>
+            ))}
+            {getAvailableSubjects(activeStandard).length === 0 && (
+              <span className="text-xs text-slate-405 font-semibold italic">No subjects available</span>
+            )}
           </div>
         </div>
       </div>

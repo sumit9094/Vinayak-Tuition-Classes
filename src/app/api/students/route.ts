@@ -31,16 +31,20 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const branchParam = searchParams.get('branch');
     const standardParam = searchParams.get('standard');
+    const subjectParam = searchParams.get('subject');
 
     let query: any = {};
 
     if (session.role === 'admin') {
-      // Admin sees all students, optionally filtered by branch query param
+      // Admin sees all students, optionally filtered by branch, standard, and subject query param
       if (branchParam) {
         query.branch = branchParam;
       }
       if (standardParam) {
         query.standard = standardParam;
+      }
+      if (subjectParam) {
+        query.subjects = subjectParam;
       }
     } else if (session.role === 'teacher') {
       // Teacher sees only students whose branch is in teacher's branches AND whose standard is in teacher's standards AND whose subjects array includes the teacher's subject
@@ -73,7 +77,7 @@ export async function GET(req: Request) {
       query = {
         branch: branchQuery,
         standard: standardQuery,
-        subjects: teacherSubject,
+        subjects: subjectParam || teacherSubject,
       };
     } else {
       // Students or invalid roles cannot list other students
