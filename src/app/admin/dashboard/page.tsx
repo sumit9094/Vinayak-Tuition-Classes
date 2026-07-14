@@ -180,6 +180,51 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleToggleEnquiryReviewed = async (enqId: string, currentReviewed: boolean) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/admission-enquiry/${enqId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewed: !currentReviewed }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(
+          !currentReviewed 
+            ? 'Enquiry marked as reviewed.' 
+            : 'Enquiry marked as unreviewed.'
+        );
+        fetchData();
+      } else {
+        setErrorMsg(data.error || 'Failed to update enquiry status.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Network error. Failed to update enquiry.');
+    }
+  };
+
+  const handleDeleteEnquiry = async (enqId: string, visitorName: string) => {
+    if (!window.confirm(`Are you sure you want to permanently delete enquiry from "${visitorName}"?`)) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    try {
+      const res = await fetch(`/api/admission-enquiry/${enqId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(`Enquiry from "${visitorName}" deleted successfully.`);
+        fetchData();
+      } else {
+        setErrorMsg(data.error || 'Failed to delete enquiry.');
+      }
+    } catch (e) {
+      console.error(e);
+      setErrorMsg('Network error. Failed to delete enquiry.');
+    }
+  };
+
   const formatMonthLabel = (monthYearStr: string) => {
     if (!monthYearStr) return '';
     const [year, month] = monthYearStr.split('-');
@@ -656,19 +701,37 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
         {/* Navigation Tabs */}
         <div className="flex space-x-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-850 overflow-x-auto">
-          {(['students', 'teachers', 'enquiries', 'reviews', 'attendance', 'marks', 'fees'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer ${
-                activeTab === tab
-                  ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-800'
-                  : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {tabTranslations[language as 'EN' | 'GJ']?.[tab] || tabTranslations['EN'][tab]}
-            </button>
-          ))}
+          {(['students', 'teachers', 'enquiries', 'reviews', 'attendance', 'marks', 'fees'] as const).map((tab) => {
+            const unreviewedEnquiriesCount = enquiries.filter((e: any) => !e.reviewed).length;
+            const pendingReviewsCount = reviewsPending.length;
+            
+            const showEnquiriesBadge = tab === 'enquiries' && unreviewedEnquiriesCount > 0;
+            const showReviewsBadge = tab === 'reviews' && pendingReviewsCount > 0;
+
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold capitalize transition-all cursor-pointer flex items-center space-x-2 shrink-0 ${
+                  activeTab === tab
+                    ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-800'
+                    : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                }`}
+              >
+                <span>{tabTranslations[language as 'EN' | 'GJ']?.[tab] || tabTranslations['EN'][tab]}</span>
+                {showEnquiriesBadge && (
+                  <span className="w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-black leading-none">
+                    {unreviewedEnquiriesCount}
+                  </span>
+                )}
+                {showReviewsBadge && (
+                  <span className="w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[9px] font-black leading-none">
+                    {pendingReviewsCount}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
         {/* Universal Search Bar & Dropdown Filters */}
@@ -1021,6 +1084,8 @@ export default function AdminDashboardPage() {
                       <th className="py-3 px-4">Medium</th>
                       <th className="py-3 px-4">Message</th>
                       <th className="py-3 px-4">Received At</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -1049,6 +1114,37 @@ export default function AdminDashboardPage() {
                             day: 'numeric',
                             year: 'numeric'
                           })}
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                            enq.reviewed 
+                              ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                              : 'bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse'
+                          }`}>
+                            {enq.reviewed ? 'Reviewed' : 'New'}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleToggleEnquiryReviewed(enq._id, enq.reviewed)}
+                              className={`px-2 py-1 rounded-lg border text-[10px] font-black transition-colors cursor-pointer ${
+                                enq.reviewed 
+                                  ? 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-855 text-slate-500 hover:bg-slate-200/50' 
+                                  : 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20 text-[#8B5CF6] hover:bg-[#8B5CF6]/20'
+                              }`}
+                              title={enq.reviewed ? "Mark as New" : "Mark as Reviewed"}
+                            >
+                              {enq.reviewed ? 'Undo' : 'Reviewed'}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEnquiry(enq._id, enq.name)}
+                              className="p-1.5 rounded-lg border border-red-200 dark:border-red-955/40 hover:bg-red-500/10 text-red-500 transition-colors cursor-pointer"
+                              title="Delete Enquiry"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

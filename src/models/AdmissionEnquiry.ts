@@ -27,6 +27,10 @@ const AdmissionEnquirySchema = new Schema(
       trim: true,
       default: '',
     },
+    reviewed: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
