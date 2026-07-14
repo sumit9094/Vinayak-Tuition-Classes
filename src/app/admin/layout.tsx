@@ -48,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 Tuition Classes
               </span>
             </div>
-            <div className="bg-[#8B5CF6]/10 text-[#8B5CF6] text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center border border-[#8B5CF6]/20">
+            <div className="hidden sm:flex bg-[#8B5CF6]/10 text-[#8B5CF6] text-[9px] font-black uppercase px-2 py-0.5 rounded-full items-center border border-[#8B5CF6]/20">
               <Shield className="w-2.5 h-2.5 mr-1" />
               {language === 'GJ' ? 'એડમિન પોર્ટલ' : 'Admin Portal'}
             </div>
@@ -79,7 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-105/80 dark:bg-slate-900/60 text-slate-650 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors focus:outline-none cursor-pointer"
+              className="p-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-105/80 dark:bg-slate-900/60 text-slate-655 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800/50 transition-colors focus:outline-none cursor-pointer"
               aria-label="Toggle Theme"
             >
               {theme === 'light' ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
@@ -95,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="flex items-center space-x-1 text-xs font-bold py-1.5 px-3 rounded-full text-white bg-red-500 hover:bg-red-600 shadow-sm transition-colors focus:outline-none cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">{t('authLogoutBtn')}</span>
+              <span className="hidden sm:inline">{t('authLogoutBtn')}</span>
             </button>
           </div>
         </div>

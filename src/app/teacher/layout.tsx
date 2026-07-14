@@ -47,7 +47,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
                 Tuition Classes
               </span>
             </div>
-            <div className="bg-[#8B5CF6]/10 text-[#8B5CF6] text-[9px] font-black uppercase px-2 py-0.5 rounded-full flex items-center border border-[#8B5CF6]/20">
+            <div className="hidden sm:flex bg-[#8B5CF6]/10 text-[#8B5CF6] text-[9px] font-black uppercase px-2 py-0.5 rounded-full items-center border border-[#8B5CF6]/20">
               <Briefcase className="w-2.5 h-2.5 mr-1" />
               {language === 'GJ' ? 'શિક્ષક પોર્ટલ' : 'Teacher Workspace'}
             </div>
@@ -94,7 +94,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
               className="flex items-center space-x-1 text-xs font-bold py-1.5 px-3 rounded-full text-white bg-red-500 hover:bg-red-600 shadow-sm transition-colors focus:outline-none cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">{t('authLogoutBtn')}</span>
+              <span className="hidden sm:inline">{t('authLogoutBtn')}</span>
             </button>
           </div>
         </div>

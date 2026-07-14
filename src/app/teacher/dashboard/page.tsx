@@ -532,7 +532,7 @@ export default function TeacherDashboardPage() {
                     placeholder="e.g. Unit Test 1"
                     value={testName}
                     onChange={(e) => setTestName(e.target.value)}
-                    className="flex-grow px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                    className="min-w-0 flex-grow px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
                   />
                   <button
                     type="button"
