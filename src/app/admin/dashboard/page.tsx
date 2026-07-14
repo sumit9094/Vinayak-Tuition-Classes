@@ -82,6 +82,52 @@ interface TestMarkRecord {
   totalMarks: number;
 }
 
+const SkeletonTable = () => (
+  <div className="animate-pulse space-y-4">
+    <div className="space-y-3">
+      <div className="grid grid-cols-6 gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
+        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+        <div className="h-3 bg-slate-250 dark:bg-slate-800 rounded col-span-1"></div>
+      </div>
+      {[...Array(5)].map((_, idx) => (
+        <div key={idx} className="grid grid-cols-6 gap-4 py-3">
+          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-905 rounded col-span-1"></div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const SkeletonCards = () => (
+  <div className="animate-pulse grid sm:grid-cols-2 gap-4">
+    {[...Array(4)].map((_, idx) => (
+      <div key={idx} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
+        <div className="flex justify-between items-center">
+          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
+          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
+        </div>
+        <div className="space-y-2">
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded w-full"></div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded w-5/6"></div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-850">
+          <div className="h-6 bg-slate-150 dark:bg-slate-800 rounded w-20"></div>
+          <div className="h-6 bg-slate-150 dark:bg-slate-800 rounded w-20"></div>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 export default function AdminDashboardPage() {
   const { user, logout } = useAuth();
   const { language } = useLanguage();
@@ -793,9 +839,7 @@ export default function AdminDashboardPage() {
             </h3>
 
             {loading ? (
-              <div className="py-16 flex justify-center items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
-              </div>
+              <SkeletonTable />
             ) : filteredStudents.length === 0 ? (
               <p className="text-slate-400 py-10 text-xs font-semibold">No student records found.</p>
             ) : (
@@ -872,9 +916,7 @@ export default function AdminDashboardPage() {
               </h3>
 
               {loading ? (
-                <div className="py-16 flex justify-center items-center">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#8B5CF6]"></div>
-                </div>
+                <SkeletonTable />
               ) : filteredTeachers.length === 0 ? (
                 <p className="text-slate-400 py-10 text-xs font-semibold">No teachers registered.</p>
               ) : (
@@ -1068,7 +1110,9 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            {enquiries.length === 0 ? (
+            {loading ? (
+              <SkeletonTable />
+            ) : enquiries.length === 0 ? (
               <div className="text-center py-16 text-slate-405 dark:text-slate-550 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col items-center justify-center">
                 <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-700 mb-2" />
                 <span className="text-xs font-semibold">No inquiries submitted yet.</span>
@@ -1173,7 +1217,9 @@ export default function AdminDashboardPage() {
                 </span>
               </div>
 
-              {reviewsPending.length === 0 ? (
+              {loading ? (
+                <SkeletonCards />
+              ) : reviewsPending.length === 0 ? (
                 <div className="text-center py-12 text-slate-405 dark:text-slate-550 border border-dashed border-slate-205 dark:border-slate-800 rounded-xl">
                   No pending reviews found.
                 </div>
