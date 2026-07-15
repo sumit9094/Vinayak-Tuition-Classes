@@ -1342,16 +1342,6 @@ export default function AdminDashboardPage() {
         {/* Fees Tab */}
         {activeTab === 'fees' && (
           <div className="space-y-6">
-            {/* Info Banner */}
-            <div className="flex items-start gap-3 p-4 bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 rounded-2xl text-xs font-semibold text-left">
-              <ClipboardList className="w-5 h-5 shrink-0 text-indigo-500 animate-pulse" />
-              <div>
-                <p className="font-bold">Module Under Construction</p>
-                <p className="text-[10px] text-slate-505 dark:text-slate-400 mt-0.5">
-                  Payment recording, WhatsApp reminders, and online payment options will be added here soon.
-                </p>
-              </div>
-            </div>
 
             {/* Fees Table Card */}
             <div className="glass-card rounded-2xl border border-slate-205 dark:border-slate-850 bg-white/50 dark:bg-slate-950/20 backdrop-blur-md p-6 shadow-sm">
