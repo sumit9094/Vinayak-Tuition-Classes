@@ -12,14 +12,21 @@ export default function Hero() {
   const fullText = t('heroBadgeAdmission');
   const [typedText, setTypedText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loopCount, setLoopCount] = useState(0);
 
   // Reset typewriter if language/fullText changes
   useEffect(() => {
     setTypedText('');
     setIsDeleting(false);
+    setLoopCount(0);
   }, [fullText]);
 
   useEffect(() => {
+    if (loopCount >= 1) {
+      setTypedText(fullText);
+      return;
+    }
+
     let timer: NodeJS.Timeout;
     
     const handleType = () => {
@@ -31,7 +38,7 @@ export default function Hero() {
         }
       } else {
         if (typedText === '') {
-          setIsDeleting(false);
+          setLoopCount(1);
         } else {
           setTypedText(fullText.slice(0, typedText.length - 1));
         }
@@ -43,21 +50,19 @@ export default function Hero() {
     if (typedText === fullText && !isDeleting) {
       timer = setTimeout(() => setIsDeleting(true), 2000);
     } else if (typedText === '' && isDeleting) {
-      timer = setTimeout(() => setIsDeleting(false), 800);
+      setLoopCount(1);
     } else {
       timer = setTimeout(handleType, speed);
     }
 
     return () => clearTimeout(timer);
-  }, [typedText, isDeleting, fullText]);
+  }, [typedText, isDeleting, fullText, loopCount]);
 
   return (
     <section id="home" className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-24 pb-16 lg:pt-28 lg:pb-0 bg-gradient-to-b from-slate-100 via-white to-slate-100 dark:from-darkObsidian dark:via-slate-950 dark:to-darkObsidian transition-colors duration-300">
-      {/* Background Elements (Static to optimize WebKit rendering performance) */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accentViolet/5 dark:bg-accentViolet/10 rounded-full mix-blend-screen filter blur-[100px]"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-accentCyan/5 dark:bg-accentCyan/10 rounded-full mix-blend-screen filter blur-[100px]"></div>
-        <div className="absolute bottom-1/4 left-1/2 w-96 h-96 bg-accentViolet/5 dark:bg-accentViolet/10 rounded-full mix-blend-screen filter blur-[100px]"></div>
+      {/* Background Elements (Static single-blur container to optimize WebKit rendering performance) */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+        <div className="w-[600px] h-[600px] bg-gradient-to-tr from-accentViolet/5 to-accentCyan/5 rounded-full filter blur-[40px] mix-blend-screen"></div>
       </div>
 
       <div className="container mx-auto px-6 lg:px-12 relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-12 items-center">
@@ -69,10 +74,12 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="inline-flex items-center bg-white/65 dark:bg-slate-900/70 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5 sm:px-5 sm:py-2 mb-3 lg:mb-6 shadow-md hover:border-accentViolet/30 transition-all duration-300">
+            <div className="inline-flex items-center bg-white/80 dark:bg-slate-900/85 backdrop-blur-sm border border-slate-200 dark:border-slate-800 rounded-full px-4 py-1.5 sm:px-5 sm:py-2 mb-3 lg:mb-6 shadow-md hover:border-accentViolet/30 transition-all duration-300">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-accentViolet to-accentCyan dark:from-indigo-300 dark:to-accentCyan text-[11px] sm:text-sm font-extrabold tracking-wider min-h-[20px] py-1 flex items-center select-none">
                 {typedText}
-                <span className="inline-block w-[3px] h-4 ml-1 bg-accentCyan dark:bg-indigo-300 animate-[pulse_0.8s_infinite] align-middle"></span>
+                {loopCount < 1 && (
+                  <span className="inline-block w-[3px] h-4 ml-1 bg-accentCyan dark:bg-indigo-300 animate-[pulse_0.8s_infinite] align-middle"></span>
+                )}
               </span>
             </div>
           </motion.div>
@@ -122,8 +129,8 @@ export default function Hero() {
         <div className="relative block w-full lg:w-1/2 mt-2 mb-14 lg:my-0">
           <div className="relative w-full max-w-[550px] lg:aspect-square mx-auto flex items-center justify-center">
             
-            {/* Glowing Studio Background */}
-            <div className="absolute w-[80%] h-[80%] bg-gradient-radial from-accentViolet/30 via-accentCyan/10 to-transparent rounded-full blur-[80px] -z-10 animate-pulse"></div>
+            {/* Glowing Studio Background (Static to optimize WebKit performance) */}
+            <div className="absolute w-[80%] h-[80%] bg-gradient-radial from-accentViolet/30 via-accentCyan/10 to-transparent rounded-full blur-[80px] -z-10"></div>
             
             {/* Large Decorative Circle */}
             <div className="absolute w-[70%] h-[70%] rounded-full border-2 border-dashed border-accentViolet/20 animate-[spin_60s_linear_infinite] -z-10"></div>

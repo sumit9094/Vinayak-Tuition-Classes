@@ -144,7 +144,7 @@ export default function About() {
             </GlassCard>
 
             {/* Decorative blob */}
-            <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-accentViolet/5 rounded-full blur-[80px] pointer-events-none"></div>
+            <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-accentViolet/5 rounded-full blur-[40px] pointer-events-none"></div>
           </div>
 
         </div>
