@@ -25,10 +25,14 @@ export default function GlassCard({ children, className, delay = 0, hoverGlow = 
       transition={{ duration: 0.6, delay }}
       className={cn(
         "glass-card rounded-2xl p-6 relative overflow-hidden group transition-all duration-500",
-        hoverGlow && "hover:shadow-[0_20px_50px_rgba(124,58,237,0.15)] hover:border-accentViolet/30 hover:-translate-y-2 hover:scale-[1.01]",
+        hoverGlow && "hover:border-accentViolet/30 hover:-translate-y-2 hover:scale-[1.01]",
         className
       )}
     >
+      {/* GPU-composited shadow hover layer to avoid expensive main-thread box-shadow animation */}
+      {hoverGlow && (
+        <div className="absolute inset-0 rounded-2xl shadow-[0_20px_50px_rgba(124,58,237,0.15)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+      )}
       {hoverGlow && (
         <div className="absolute inset-0 bg-gradient-to-br from-accentViolet/5 to-accentCyan/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
       )}

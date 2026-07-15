@@ -53,11 +53,11 @@ export default function Hero() {
 
   return (
     <section id="home" className="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-24 pb-16 lg:pt-28 lg:pb-0 bg-gradient-to-b from-slate-100 via-white to-slate-100 dark:from-darkObsidian dark:via-slate-950 dark:to-darkObsidian transition-colors duration-300">
-      {/* Animated Background Elements */}
+      {/* Background Elements (Static to optimize WebKit rendering performance) */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accentViolet/5 dark:bg-accentViolet/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-accentCyan/5 dark:bg-accentCyan/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-1/4 left-1/2 w-96 h-96 bg-accentViolet/5 dark:bg-accentViolet/10 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-accentViolet/5 dark:bg-accentViolet/10 rounded-full mix-blend-screen filter blur-[100px]"></div>
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-accentCyan/5 dark:bg-accentCyan/10 rounded-full mix-blend-screen filter blur-[100px]"></div>
+        <div className="absolute bottom-1/4 left-1/2 w-96 h-96 bg-accentViolet/5 dark:bg-accentViolet/10 rounded-full mix-blend-screen filter blur-[100px]"></div>
       </div>
 
       <div className="container mx-auto px-6 lg:px-12 relative z-10 flex flex-col lg:flex-row gap-6 lg:gap-12 items-center">

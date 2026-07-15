@@ -22,14 +22,13 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-white dark:bg-slate-950 pt-16 pb-8 border-t border-slate-200 dark:border-slate-800/80 overflow-hidden">
-      {/* Animated Gradient Line */}
+      {/* Animated Gradient Line (GPU-accelerated transform X animation) */}
       <motion.div 
-        className="absolute top-0 left-0 h-[3px] bg-gradient-to-r from-accentViolet via-accentCyan to-accentViolet w-full opacity-80"
+        className="absolute top-0 left-0 h-[3px] bg-gradient-to-r from-accentViolet via-accentCyan to-accentViolet w-[200%] opacity-80"
         animate={{
-          backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+          x: ['0%', '-50%'],
         }}
         transition={{ duration: 5, ease: "linear", repeat: Infinity }}
-        style={{ backgroundSize: '200% 200%' }}
       />
 
       <div className="container mx-auto px-6 lg:px-12 relative z-10">

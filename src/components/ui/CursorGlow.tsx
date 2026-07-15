@@ -7,6 +7,10 @@ export default function CursorGlow() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
+    // Only bind mousemove listener if device supports hover interactions (desktops/laptops)
+    const hoverMediaQuery = window.matchMedia('(hover: hover)');
+    if (!hoverMediaQuery.matches) return;
+
     const updateMousePosition = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };

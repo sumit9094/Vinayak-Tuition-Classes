@@ -48,8 +48,10 @@ const staticTestimonials: Testimonial[] = [
   }
 ]
 
-export default function ReviewsSection() {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(staticTestimonials)
+export default function ReviewsSection({ initialReviews }: { initialReviews?: Testimonial[] }) {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(
+    initialReviews && initialReviews.length > 0 ? initialReviews : staticTestimonials
+  );
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
 
@@ -64,6 +66,10 @@ export default function ReviewsSection() {
   const [formError, setFormError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialReviews && initialReviews.length > 0) {
+      setLoading(false);
+      return;
+    }
     async function fetchReviews() {
       try {
         const res = await fetch('/api/reviews')
@@ -97,7 +103,7 @@ export default function ReviewsSection() {
       }
     }
     fetchReviews()
-  }, [])
+  }, [initialReviews])
 
   const nextSlide = () => {
     if (testimonials.length === 0) return
