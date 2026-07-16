@@ -498,9 +498,9 @@ export default function TeacherDashboardPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
-                      <th className="py-3 px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
-                      <th className="py-3 px-6 text-center">{isGj ? 'હાજર (Present)' : 'Present'}</th>
-                      <th className="py-3 px-6 text-center">{isGj ? 'ગેરહાજર (Absent)' : 'Absent'}</th>
+                      <th className="py-3 px-3 sm:px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
+                      <th className="py-3 px-3 sm:px-6 text-center">{isGj ? 'હાજર (Present)' : 'Present'}</th>
+                      <th className="py-3 px-3 sm:px-6 text-center">{isGj ? 'ગેરહાજર (Absent)' : 'Absent'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -511,10 +511,10 @@ export default function TeacherDashboardPage() {
                           key={student._id} 
                           className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors"
                         >
-                          <td className="py-4 px-6 font-bold text-slate-850 dark:text-slate-200 text-left">
+                          <td className="py-4 px-3 sm:px-6 font-bold text-slate-855 dark:text-slate-200 text-left">
                             {student.name}
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-4 px-3 sm:px-6">
                             <div className="flex justify-center">
                               <label className="relative flex items-center justify-center p-1 rounded-full hover:bg-emerald-500/10 cursor-pointer">
                                 <input
@@ -534,7 +534,7 @@ export default function TeacherDashboardPage() {
                               </label>
                             </div>
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-4 px-3 sm:px-6">
                             <div className="flex justify-center">
                               <label className="relative flex items-center justify-center p-1 rounded-full hover:bg-red-500/10 cursor-pointer">
                                 <input
@@ -591,19 +591,19 @@ export default function TeacherDashboardPage() {
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   {isGj ? 'ટેસ્ટનું નામ દાખલ કરો' : 'Test / Exam Title'}
                 </label>
-                <div className="flex space-x-2">
+                <div className="flex flex-col min-[400px]:flex-row gap-2">
                   <input
                     type="text"
                     required
                     placeholder="e.g. Unit Test 1"
                     value={testName}
                     onChange={(e) => setTestName(e.target.value)}
-                    className="min-w-0 flex-grow px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                    className="w-full min-w-0 min-[400px]:flex-1 px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={fetchStudentsAndExistingLogs}
-                    className="px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors shrink-0"
+                    className="px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors shrink-0 w-full min-[400px]:w-auto text-center"
                   >
                     {isGj ? 'ડેટા લાવો' : 'Load Logs'}
                   </button>
@@ -641,8 +641,8 @@ export default function TeacherDashboardPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
-                      <th className="py-3 px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
-                      <th className="py-3 px-6 text-center">{isGj ? 'મેળવેલ ગુણ' : 'Marks Obtained'}</th>
+                      <th className="py-3 px-3 sm:px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
+                      <th className="py-3 px-3 sm:px-6 text-center">{isGj ? 'મેળવેલ ગુણ' : 'Marks Obtained'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -653,10 +653,10 @@ export default function TeacherDashboardPage() {
                           key={student._id} 
                           className="text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/10 transition-colors"
                         >
-                          <td className="py-4 px-6 font-bold text-slate-850 dark:text-slate-200 text-left">
+                          <td className="py-4 px-3 sm:px-6 font-bold text-slate-850 dark:text-slate-200 text-left">
                             {student.name}
                           </td>
-                          <td className="py-4 px-6">
+                          <td className="py-4 px-3 sm:px-6">
                             <div className="flex justify-center">
                               <input
                                 type="number"
