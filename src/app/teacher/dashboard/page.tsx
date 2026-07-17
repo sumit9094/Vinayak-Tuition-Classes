@@ -591,7 +591,7 @@ export default function TeacherDashboardPage() {
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   {isGj ? 'ટેસ્ટનું નામ દાખલ કરો' : 'Test / Exam Title'}
                 </label>
-                <div className="flex flex-wrap sm:flex-nowrap gap-2">
+                <div className="flex flex-wrap sm:flex-nowrap gap-2" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   <input
                     type="text"
                     required
