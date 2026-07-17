@@ -591,14 +591,14 @@ export default function TeacherDashboardPage() {
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   {isGj ? 'ટેસ્ટનું નામ દાખલ કરો' : 'Test / Exam Title'}
                 </label>
-                <div className="flex flex-wrap sm:flex-nowrap gap-2" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
                   <input
                     type="text"
                     required
                     placeholder="e.g. Unit Test 1"
                     value={testName}
                     onChange={(e) => setTestName(e.target.value)}
-                    className="w-full min-w-0 sm:flex-1 px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                    className="w-full px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
                   />
                   <button
                     type="button"
