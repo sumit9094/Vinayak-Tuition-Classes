@@ -298,7 +298,7 @@ export default function TeacherDashboardPage() {
 
   return (
     <>
-    <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
+    <div className="container mx-auto px-4 sm:px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
       {/* Header Info */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 text-left">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-start gap-3">
@@ -494,8 +494,8 @@ export default function TeacherDashboardPage() {
                 <span className="text-xs font-semibold">{isGj ? 'કોઈ વિદ્યાર્થીઓ મળ્યા નથી.' : 'No students found in this branch & standard.'}</span>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-850 rounded-2xl">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full border border-slate-200 dark:border-slate-850 rounded-2xl">
+                <table className="min-w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-3 sm:px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
@@ -637,8 +637,8 @@ export default function TeacherDashboardPage() {
                 <span className="text-xs font-semibold">{isGj ? 'કોઈ વિદ્યાર્થીઓ મળ્યા નથી.' : 'No students found. Enter test name and load.'}</span>
               </div>
             ) : (
-              <div className="overflow-x-auto border border-slate-200 dark:border-slate-850 rounded-2xl">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full border border-slate-200 dark:border-slate-850 rounded-2xl">
+                <table className="min-w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-3 sm:px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>

@@ -665,7 +665,7 @@ export default function AdminDashboardPage() {
   const allSubjects = ["English", "Maths", "Social Science", "Science", "Account", "Business Administration", "Economics", "Statistics"];
 
   return (
-    <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
+    <div className="container mx-auto px-4 sm:px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start">
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4 text-left">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-start gap-3">

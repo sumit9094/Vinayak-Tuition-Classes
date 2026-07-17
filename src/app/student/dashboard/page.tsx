@@ -159,7 +159,7 @@ export default function StudentDashboardPage() {
     : 0;
 
   return (
-    <div className="container mx-auto px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start text-left">
+    <div className="container mx-auto px-4 sm:px-6 py-10 max-w-6xl flex-grow flex flex-col justify-start text-left">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex flex-col items-start gap-3">
         <Link
           href="/"

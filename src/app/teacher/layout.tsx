@@ -38,7 +38,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 dark:bg-darkObsidian dark:text-white transition-colors duration-300">
       {/* Teacher Portal Header */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-850 py-4 shadow-sm">
-        <div className="container mx-auto px-6 flex justify-between items-center">
+        <div className="container mx-auto px-4 sm:px-6 flex justify-between items-center">
           {/* Logo / Brand */}
           <Link href="/" className="flex items-center space-x-2 group">
             <div>
@@ -54,7 +54,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
           </Link>
 
           {/* Quick Controls */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Language Selector */}
             <div className="flex items-center bg-slate-105/80 dark:bg-slate-900/60 p-1 rounded-full border border-slate-200 dark:border-slate-800 px-1.5">
               <button

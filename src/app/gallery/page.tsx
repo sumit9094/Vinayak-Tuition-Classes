@@ -25,7 +25,7 @@ export default function GalleryPage() {
 
   return (
     <div className="pt-32 pb-20 min-h-screen bg-slate-50 dark:bg-darkObsidian">
-      <div className="container mx-auto px-6 lg:px-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-12">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
