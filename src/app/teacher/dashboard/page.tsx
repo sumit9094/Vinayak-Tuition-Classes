@@ -591,19 +591,19 @@ export default function TeacherDashboardPage() {
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   {isGj ? 'ટેસ્ટનું નામ દાખલ કરો' : 'Test / Exam Title'}
                 </label>
-                <div className="space-y-2 sm:space-y-0 sm:flex sm:items-center sm:gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full">
                   <input
                     type="text"
                     required
                     placeholder="e.g. Unit Test 1"
                     value={testName}
                     onChange={(e) => setTestName(e.target.value)}
-                    className="w-full px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                    className="flex-1 min-w-0 w-full px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={fetchStudentsAndExistingLogs}
-                    className="px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors shrink-0 w-full sm:w-auto text-center"
+                    className="shrink-0 w-full sm:w-auto px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors text-center"
                   >
                     {isGj ? 'ડેટા લાવો' : 'Load Logs'}
                   </button>
