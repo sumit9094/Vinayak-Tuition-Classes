@@ -642,7 +642,7 @@ export default function TeacherDashboardPage() {
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-3 sm:px-6 w-3/5">{isGj ? 'વિદ્યાર્થીનું નામ' : 'Student Name'}</th>
-                      <th className="py-3 px-3 sm:px-6 text-center">{isGj ? 'મેળવેલ ગુણ' : 'Marks Obtained'}</th>
+                      <th className="py-3 px-2 sm:px-6 text-center">{isGj ? 'મેળવેલ ગુણ' : 'Marks Obtained'}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-850/40">
@@ -656,7 +656,7 @@ export default function TeacherDashboardPage() {
                           <td className="py-4 px-3 sm:px-6 font-bold text-slate-850 dark:text-slate-200 text-left">
                             {student.name}
                           </td>
-                          <td className="py-4 px-3 sm:px-6">
+                          <td className="py-3 px-2 sm:px-6">
                             <div className="flex justify-center">
                               <input
                                 type="number"
@@ -665,7 +665,7 @@ export default function TeacherDashboardPage() {
                                 placeholder="Ab"
                                 value={val}
                                 onChange={(e) => handleMarkChange(student._id, e.target.value)}
-                                className="w-20 px-2 py-1 text-center font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:border-blue-500 focus:outline-none"
+                                className="w-full max-w-[80px] px-2 py-1 text-center font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg focus:border-blue-500 focus:outline-none"
                               />
                             </div>
                           </td>
