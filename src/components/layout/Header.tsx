@@ -163,7 +163,7 @@ export default function Header() {
 
   return (
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/80 dark:bg-slate-950/60 backdrop-blur-md border-b border-slate-200 dark:border-slate-850 py-3 shadow-lg shadow-black/5 dark:shadow-black/20' : 'bg-transparent py-5'}`}>
-      <div className="container mx-auto px-6 lg:px-12 flex justify-between items-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-12 flex justify-between items-center">
         {/* Logo / Brand Name */}
         <Link href="/" className="flex items-center group">
           <div>
@@ -290,7 +290,7 @@ export default function Header() {
         </div>
 
         {/* Mobile menu toggle */}
-        <div className="flex items-center space-x-3 md:hidden">
+        <div className="flex items-center gap-1.5 sm:gap-3 md:hidden">
           {/* Theme Toggle Button for Mobile */}
           <button 
             onClick={toggleTheme}

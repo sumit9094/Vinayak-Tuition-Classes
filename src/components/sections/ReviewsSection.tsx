@@ -240,7 +240,7 @@ export default function ReviewsSection({ initialReviews }: { initialReviews?: Te
                       </div>
                     </div>
 
-                    <p className="text-slate-700 dark:text-slate-200 flex-grow text-base sm:text-lg leading-relaxed mt-2 italic">
+                    <p className="text-slate-700 dark:text-slate-200 flex-grow text-base sm:text-lg leading-relaxed mt-2 italic overflow-y-auto max-h-[140px] pr-1">
                       "{testimonials[currentIndex].review}"
                     </p>
                   </GlassCard>

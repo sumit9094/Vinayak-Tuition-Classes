@@ -867,8 +867,8 @@ export default function AdminDashboardPage() {
             ) : filteredStudents.length === 0 ? (
               <EmptyState icon={Users} title="No student records found." subtitle="Students will appear here once they register." />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full">
+                <table className="min-w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-4">Name</th>
@@ -1139,8 +1139,8 @@ export default function AdminDashboardPage() {
             ) : enquiries.length === 0 ? (
               <EmptyState icon={ClipboardList} title="No enquiries submitted yet." subtitle="Visitor inquiries from the homepage form will appear here." />
             ) : (
-              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-850">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full rounded-2xl border border-slate-200 dark:border-slate-850">
+                <table className="min-w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-slate-900/40 border-b border-slate-200 dark:border-slate-850 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-4">Visitor Name</th>
@@ -1519,8 +1519,8 @@ export default function AdminDashboardPage() {
                 No attendance logs found for the selected branch & subject.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full">
+                <table className="min-w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-4">Student Name</th>
@@ -1608,8 +1608,8 @@ export default function AdminDashboardPage() {
                 No test marks registered for the selected branch & subject.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+              <div className="overflow-x-auto w-full">
+                <table className="min-w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wider text-slate-400">
                       <th className="py-3 px-4">Student Name</th>
