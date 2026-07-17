@@ -419,10 +419,10 @@ export default function TeacherDashboardPage() {
 
       {/* Sub-Tabs Switcher (Attendance vs Marks) */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex space-x-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-850 self-start">
+        <div className="flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-slate-850 self-stretch sm:self-start w-full sm:w-auto">
           <button
             onClick={() => setActiveSubTab('attendance')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 flex-grow sm:flex-grow-0 ${
               activeSubTab === 'attendance'
                 ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-800'
                 : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -433,7 +433,7 @@ export default function TeacherDashboardPage() {
           </button>
           <button
             onClick={() => setActiveSubTab('marks')}
-            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center space-x-1.5 flex-grow sm:flex-grow-0 ${
               activeSubTab === 'marks'
                 ? 'bg-white dark:bg-slate-950 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-800'
                 : 'text-slate-550 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -591,19 +591,19 @@ export default function TeacherDashboardPage() {
                 <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">
                   {isGj ? 'ટેસ્ટનું નામ દાખલ કરો' : 'Test / Exam Title'}
                 </label>
-                <div className="flex flex-col min-[400px]:flex-row gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
                     type="text"
                     required
                     placeholder="e.g. Unit Test 1"
                     value={testName}
                     onChange={(e) => setTestName(e.target.value)}
-                    className="w-full min-w-0 min-[400px]:flex-1 px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
+                    className="w-full min-w-0 sm:flex-1 px-3.5 py-1.5 text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-[#8B5CF6] focus:outline-none"
                   />
                   <button
                     type="button"
                     onClick={fetchStudentsAndExistingLogs}
-                    className="px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors shrink-0 w-full min-[400px]:w-auto text-center"
+                    className="px-3 py-1.5 text-[10px] font-black bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border border-blue-500/20 rounded-xl transition-colors shrink-0 w-full sm:w-auto text-center"
                   >
                     {isGj ? 'ડેટા લાવો' : 'Load Logs'}
                   </button>
