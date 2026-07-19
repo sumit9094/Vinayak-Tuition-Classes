@@ -46,7 +46,12 @@ export async function sendPushToUser(
       };
 
       try {
-        await webPush.sendNotification(pushSubscription, jsonPayload);
+        await webPush.sendNotification(pushSubscription, jsonPayload, {
+          TTL: 86400, // 24 hours
+          headers: {
+            'Urgency': 'high'
+          }
+        });
       } catch (err: any) {
         if (err.statusCode === 410 || err.statusCode === 404) {
           console.log(`Deleting expired push subscription: ${sub.endpoint}`);
