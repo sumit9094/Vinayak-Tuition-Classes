@@ -83,52 +83,6 @@ interface TestMarkRecord {
   totalMarks: number;
 }
 
-const SkeletonTable = () => (
-  <div className="animate-pulse space-y-4">
-    <div className="space-y-3">
-      <div className="grid grid-cols-6 gap-4 border-b border-slate-200 dark:border-slate-800 pb-3">
-        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
-        <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded col-span-1"></div>
-      </div>
-      {[...Array(5)].map((_, idx) => (
-        <div key={idx} className="grid grid-cols-6 gap-4 py-3">
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded col-span-1"></div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const SkeletonCards = () => (
-  <div className="animate-pulse grid sm:grid-cols-2 gap-4">
-    {[...Array(4)].map((_, idx) => (
-      <div key={idx} className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-4">
-        <div className="flex justify-between items-center">
-          <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/3"></div>
-          <div className="h-3 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
-        </div>
-        <div className="space-y-2">
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded w-full"></div>
-          <div className="h-3 bg-slate-100 dark:bg-slate-900 rounded w-5/6"></div>
-        </div>
-        <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-          <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-20"></div>
-          <div className="h-6 bg-slate-100 dark:bg-slate-800 rounded w-20"></div>
-        </div>
-      </div>
-    ))}
-  </div>
-);
-
 const EmptyState = ({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle?: string }) => (
   <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center">
     <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900 mb-4">
@@ -863,7 +817,9 @@ export default function AdminDashboardPage() {
             </h3>
 
             {loading ? (
-              <SkeletonTable />
+              <div className="py-16 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+              </div>
             ) : filteredStudents.length === 0 ? (
               <EmptyState icon={Users} title="No student records found." subtitle="Students will appear here once they register." />
             ) : (
@@ -940,7 +896,9 @@ export default function AdminDashboardPage() {
               </h3>
 
               {loading ? (
-                <SkeletonTable />
+                <div className="py-16 flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+                </div>
               ) : filteredTeachers.length === 0 ? (
                 <EmptyState icon={Briefcase} title="No teachers registered." subtitle="Add faculty using the form below." />
               ) : (
@@ -1135,7 +1093,9 @@ export default function AdminDashboardPage() {
             </div>
 
             {loading ? (
-              <SkeletonTable />
+              <div className="py-16 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+              </div>
             ) : enquiries.length === 0 ? (
               <EmptyState icon={ClipboardList} title="No enquiries submitted yet." subtitle="Visitor inquiries from the homepage form will appear here." />
             ) : (
@@ -1239,7 +1199,9 @@ export default function AdminDashboardPage() {
               </div>
 
               {loading ? (
-                <SkeletonCards />
+                <div className="py-16 flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+                </div>
               ) : reviewsPending.length === 0 ? (
                 <EmptyState icon={Star} title="No pending reviews." subtitle="New visitor testimonials awaiting approval will appear here." />
               ) : (
@@ -1356,7 +1318,9 @@ export default function AdminDashboardPage() {
               </div>
 
               {loading ? (
-                <SkeletonTable />
+                <div className="py-16 flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#8B5CF6]"></div>
+                </div>
               ) : fees.length === 0 ? (
                 <EmptyState icon={DollarSign} title="No fee records found." subtitle="Student fee details will appear here once configured." />
               ) : (
