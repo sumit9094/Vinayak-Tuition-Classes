@@ -7,6 +7,7 @@ import { LogOut, Sun, Moon, Globe, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useTheme } from '@/context/ThemeContext';
+import NotificationOptIn from '@/components/NotificationOptIn';
 
 export default function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, isLoading } = useAuth();
@@ -104,6 +105,7 @@ export default function StudentLayout({ children }: { children: React.ReactNode 
       <main className="flex-grow flex flex-col">
         {children}
       </main>
+      <NotificationOptIn />
     </div>
   );
 }

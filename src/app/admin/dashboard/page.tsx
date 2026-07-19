@@ -28,7 +28,8 @@ import {
   ArrowLeft,
   X,
   Trash2,
-  MessageSquare
+  MessageSquare,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SuccessOverlay from '@/components/ui/SuccessOverlay';
@@ -338,6 +339,32 @@ export default function AdminDashboardPage() {
 
     const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(messageText)}`;
     window.open(waLink, '_blank');
+  };
+
+  const handleSendPushReminder = async (student: any, breakdown: any[]) => {
+    try {
+      const pendingItems = breakdown.filter((b: any) => !b.paid);
+      const totalPending = pendingItems.reduce((sum: number, b: any) => sum + b.amount, 0);
+
+      const res = await fetch('/api/fees/remind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          studentId: student._id,
+          totalPending
+        })
+      });
+
+      if (res.ok) {
+        setSuccessOverlay({ show: true, message: `Push Reminder Sent to ${student.name}!` });
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to send push reminder');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network error. Failed to send push reminder.');
+    }
   };
 
   const tabTranslations: Record<'EN' | 'GJ', Record<string, string>> = {
@@ -1654,13 +1681,22 @@ export default function AdminDashboardPage() {
                   </span>
                   
                   {studentDetails.breakdown.some((b: any) => !b.paid) && (
-                    <button
-                      onClick={() => handleSendReminder(studentDetails.student, studentDetails.breakdown)}
-                      className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500 text-white hover:bg-emerald-600 transition-all cursor-pointer shadow-md shadow-emerald-500/10"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      <span>Send Reminder</span>
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSendReminder(studentDetails.student, studentDetails.breakdown)}
+                        className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-500 text-white hover:bg-emerald-600 transition-all cursor-pointer shadow-md shadow-emerald-500/10"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Send WhatsApp</span>
+                      </button>
+                      <button
+                        onClick={() => handleSendPushReminder(studentDetails.student, studentDetails.breakdown)}
+                        className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-blue-500 text-white hover:bg-blue-600 transition-all cursor-pointer shadow-md shadow-blue-500/10"
+                      >
+                        <Bell className="w-4 h-4" />
+                        <span>Send Push</span>
+                      </button>
+                    </div>
                   )}
                 </div>
 

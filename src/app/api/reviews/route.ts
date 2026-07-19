@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { connectDB } from '@/lib/mongodb';
 import Review from '@/models/Review';
+import User from '@/models/User';
 import jwt from 'jsonwebtoken';
+import { sendPushToUser } from '@/lib/sendPushNotification';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -90,6 +92,20 @@ export async function POST(req: Request) {
       rating: ratingNum,
       approved: false, // Default is false, requires admin approval
     });
+
+    // Notify all admin users via push notification
+    try {
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      admins.forEach((admin) => {
+        sendPushToUser(admin._id.toString(), 'staff', {
+          title: 'New Review Pending',
+          body: `${name} submitted a new review awaiting approval.`,
+          url: '/admin/dashboard'
+        }).catch(err => console.error('Push notification trigger error:', err));
+      });
+    } catch (pushErr) {
+      console.error('Failed to query admins for push notification:', pushErr);
+    }
     
     return NextResponse.json(
       {

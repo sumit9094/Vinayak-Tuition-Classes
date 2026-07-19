@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/mongodb';
 import TestMark from '@/models/TestMark';
 import Student from '@/models/Student';
 import jwt from 'jsonwebtoken';
+import { sendPushToUser } from '@/lib/sendPushNotification';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -88,6 +89,16 @@ export async function POST(req: Request) {
       }));
 
       await TestMark.bulkWrite(operations);
+
+      // Trigger push notifications in the background
+      records.forEach((rec: any) => {
+        sendPushToUser(rec.studentId, 'student', {
+          title: 'New Marks Added',
+          body: `Your marks for ${testName} have been added.`,
+          url: '/student/dashboard'
+        }).catch(err => console.error('Push notification trigger error:', err));
+      });
+
       return NextResponse.json({ message: `Test marks saved for ${records.length} students` });
     }
 
@@ -135,6 +146,13 @@ export async function POST(req: Request) {
       },
       { upsert: true, new: true }
     );
+
+    // Trigger push notification in the background
+    sendPushToUser(studentId, 'student', {
+      title: 'New Marks Added',
+      body: `Your marks for ${testName} have been added.`,
+      url: '/student/dashboard'
+    }).catch(err => console.error('Push notification trigger error:', err));
 
     return NextResponse.json(testMark, { status: 201 });
   } catch (error: any) {
