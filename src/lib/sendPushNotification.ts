@@ -46,18 +46,21 @@ export async function sendPushToUser(
       };
 
       try {
-        await webPush.sendNotification(pushSubscription, jsonPayload, {
+        console.log(`[Push Notification] Attempting to send to endpoint: ${sub.endpoint}`);
+        const result = await webPush.sendNotification(pushSubscription, jsonPayload, {
           TTL: 86400, // 24 hours
           headers: {
             'Urgency': 'high'
           }
         });
+        console.log(`[Push Notification] Success! Deployed to endpoint: ${sub.endpoint}. Status: ${result.statusCode}`);
       } catch (err: any) {
+        console.error(`[Push Notification] Error sending to ${sub.endpoint}:`, err.message || err);
         if (err.statusCode === 410 || err.statusCode === 404) {
-          console.log(`Deleting expired push subscription: ${sub.endpoint}`);
+          console.log(`[Push Notification] Deleting expired/invalid subscription: ${sub.endpoint}`);
           await PushSubscription.deleteOne({ _id: sub._id });
         } else {
-          console.error('Error sending push notification:', err);
+          console.error('[Push Notification] Non-expired push error details:', err);
         }
       }
     });
