@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -16,9 +17,17 @@ function urlBase64ToUint8Array(base64String: string) {
 }
 
 export default function NotificationOptIn() {
+  const { user } = useAuth();
   const [showBanner, setShowBanner] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
   const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+
+  // Sync subscription whenever user logs in or registration becomes available
+  useEffect(() => {
+    if (user && swRegistration && Notification.permission === 'granted') {
+      syncSubscription(swRegistration);
+    }
+  }, [user, swRegistration]);
 
   useEffect(() => {
     // Graceful feature detection for Push notifications (PWA support check)
