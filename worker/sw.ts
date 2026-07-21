@@ -1,4 +1,11 @@
-// Custom Service Worker logic for Web Push notifications
+import { precacheAndRoute } from 'workbox-precaching';
+
+declare const self: any;
+
+// Precache resources. The build tool will inject self.__WB_MANIFEST here.
+precacheAndRoute(self.__WB_MANIFEST || []);
+
+// Listen for push events
 self.addEventListener('push', (event: any) => {
   if (!event.data) return;
 
@@ -15,20 +22,21 @@ self.addEventListener('push', (event: any) => {
     };
 
     event.waitUntil(
-      (self as any).registration.showNotification(title, options)
+      self.registration.showNotification(title, options)
     );
   } catch (err) {
     console.error('Error handling push event:', err);
   }
 });
 
+// Handle notification click events
 self.addEventListener('notificationclick', (event: any) => {
   event.notification.close();
 
-  const urlToOpen = new URL(event.notification.data?.url || '/', (self as any).location.origin).href;
+  const urlToOpen = new URL(event.notification.data?.url || '/', self.location.origin).href;
 
   event.waitUntil(
-    (self as any).clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients: any[]) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients: any[]) => {
       // Focus existing window tab if matches
       for (const client of windowClients) {
         if (client.url === urlToOpen && 'focus' in client) {
@@ -36,8 +44,8 @@ self.addEventListener('notificationclick', (event: any) => {
         }
       }
       // Otherwise open new window tab
-      if ((self as any).clients.openWindow) {
-        return (self as any).clients.openWindow(urlToOpen);
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
       }
     })
   );
