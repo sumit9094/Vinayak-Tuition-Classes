@@ -2,6 +2,15 @@ import { precacheAndRoute } from 'workbox-precaching';
 
 declare const self: any;
 
+// Force activate service worker immediately on install
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event: any) => {
+  event.waitUntil(self.clients.claim());
+});
+
 // Precache resources. The build tool will inject self.__WB_MANIFEST here.
 precacheAndRoute(self.__WB_MANIFEST || []);
 
@@ -16,6 +25,9 @@ self.addEventListener('push', (event: any) => {
       body: data.body || '',
       icon: '/logo.png',
       badge: '/logo.png',
+      vibrate: [200, 100, 200],
+      tag: 'vtc-notification-' + Date.now(),
+      requireInteraction: true,
       data: {
         url: data.url || '/'
       }
