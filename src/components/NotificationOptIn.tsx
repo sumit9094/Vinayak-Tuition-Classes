@@ -18,6 +18,7 @@ function urlBase64ToUint8Array(base64String: string) {
 export default function NotificationOptIn() {
   const [showBanner, setShowBanner] = useState(false);
   const [isSupported, setIsSupported] = useState(false);
+  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
     // Graceful feature detection for Push notifications (PWA support check)
@@ -30,11 +31,17 @@ export default function NotificationOptIn() {
 
     if (!supported) return;
 
-    // If permission is already granted, silently register/sync subscription in background
-    if (Notification.permission === 'granted') {
-      syncSubscription();
-      return;
-    }
+    // Fetch and store registration immediately
+    navigator.serviceWorker.ready.then((reg) => {
+      setSwRegistration(reg);
+      
+      // If permission is already granted, silently register/sync subscription in background
+      if (Notification.permission === 'granted') {
+        syncSubscription(reg);
+      }
+    }).catch((err) => {
+      console.error('Service worker not ready:', err);
+    });
 
     // If permission is denied or already dismissed in this local session, don't show banner
     const dismissed = localStorage.getItem('push_opt_in_dismissed');
@@ -50,9 +57,9 @@ export default function NotificationOptIn() {
     return () => clearTimeout(timer);
   }, []);
 
-  const syncSubscription = async () => {
+  // For silent background sync when permission is already granted
+  const syncSubscription = async (registration: ServiceWorkerRegistration) => {
     try {
-      const registration = await navigator.serviceWorker.ready;
       let subscription = await registration.pushManager.getSubscription();
 
       // If no subscription exists, create one using our VAPID public key
@@ -81,18 +88,55 @@ export default function NotificationOptIn() {
     }
   };
 
-  const handleEnable = async () => {
-    setShowBanner(false);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        await syncSubscription();
-      } else {
-        localStorage.setItem('push_opt_in_dismissed', 'true');
-      }
-    } catch (err) {
-      console.error('Error requesting notification permission:', err);
+  // Directly call subscribe inside the synchronous event execution path of a user gesture
+  const subscribeDirectly = (registration: ServiceWorkerRegistration) => {
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+      console.error('VAPID public key is missing.');
+      return;
     }
+
+    try {
+      const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+      
+      registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey,
+      }).then((subscription) => {
+        // Send subscription object to our server
+        fetch('/api/push/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscription),
+        });
+      }).catch((err) => {
+        console.error('Failed to subscribe directly:', err);
+      });
+    } catch (err) {
+      console.error('Error in conversion or subscribe call:', err);
+    }
+  };
+
+  const handleEnable = () => {
+    setShowBanner(false);
+    Notification.requestPermission()
+      .then((permission) => {
+        if (permission === 'granted') {
+          if (swRegistration) {
+            subscribeDirectly(swRegistration);
+          } else {
+            navigator.serviceWorker.ready.then((reg) => {
+              setSwRegistration(reg);
+              subscribeDirectly(reg);
+            });
+          }
+        } else {
+          localStorage.setItem('push_opt_in_dismissed', 'true');
+        }
+      })
+      .catch((err) => {
+        console.error('Error requesting notification permission:', err);
+      });
   };
 
   const handleDismiss = () => {
