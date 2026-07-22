@@ -91,15 +91,16 @@ export async function POST(req: Request) {
 
       // Trigger push notifications in the background for students
       try {
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        const dObj = new Date(date);
+        const formattedDate = isNaN(dObj.getTime()) ? String(date) : dObj.toLocaleDateString('en-US', {
           day: 'numeric',
           month: 'short',
           year: 'numeric'
         });
         const pushPromises = records.map((rec: any) => {
           const statusText = rec.status === 'present' ? 'Present' : 'Absent';
-          return sendPushToUser(rec.studentId, 'student', {
-            title: 'Attendance Update',
+          return sendPushToUser(String(rec.studentId), 'student', {
+            title: `Attendance: ${statusText}`,
             body: `You were marked ${statusText} for ${subject} on ${formattedDate}.`,
             url: '/student/dashboard'
           }).catch(err => console.error('Push notification trigger error:', err));
@@ -157,14 +158,15 @@ export async function POST(req: Request) {
 
     // Trigger push notification in the background
     try {
-      const formattedDate = new Date(date).toLocaleDateString('en-US', {
+      const dObj = new Date(date);
+      const formattedDate = isNaN(dObj.getTime()) ? String(date) : dObj.toLocaleDateString('en-US', {
         day: 'numeric',
         month: 'short',
         year: 'numeric'
       });
       const statusText = status === 'present' ? 'Present' : 'Absent';
-      await sendPushToUser(studentId, 'student', {
-        title: 'Attendance Update',
+      await sendPushToUser(String(studentId), 'student', {
+        title: `Attendance: ${statusText}`,
         body: `You were marked ${statusText} for ${subject} on ${formattedDate}.`,
         url: '/student/dashboard'
       }).catch(err => console.error('Push notification trigger error:', err));
