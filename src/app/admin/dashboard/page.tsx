@@ -1390,7 +1390,17 @@ export default function AdminDashboardPage() {
                               </span>
                             )}
                           </td>
-                          <td className="py-4 px-4 text-right">
+                          <td className="py-4 px-4 text-right space-x-2">
+                            {record.status !== 'all_paid' && (
+                              <button
+                                onClick={() => handleSendPushReminder({ _id: record.studentId, name: record.name }, (record.pendingMonths || []).map((m: string) => ({ monthYear: m, paid: false, amount: record.monthlyFee })))}
+                                title="Send Push Notification Reminder to Student"
+                                className="px-3 py-1.5 rounded-xl text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer shadow-sm inline-flex items-center"
+                              >
+                                <Bell className="w-3.5 h-3.5 mr-1" />
+                                Send Push
+                              </button>
+                            )}
                             <button
                               onClick={() => handleViewDetails(record.studentId)}
                               className="px-3.5 py-1.5 rounded-xl text-xs font-black text-[#8B5CF6] bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 hover:bg-[#8B5CF6]/20 transition-all cursor-pointer shadow-sm"

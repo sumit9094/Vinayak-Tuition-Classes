@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { connectDB } from '@/lib/mongodb';
 import Student from '@/models/Student';
 import FeePayment from '@/models/FeePayment';
+import User from '@/models/User';
+import { sendPushToUser } from '@/lib/sendPushNotification';
 import { MONTHLY_FEE_BY_STANDARD } from '@/lib/constants';
 import { getMonthsOwed } from '@/lib/feeUtils';
 import jwt from 'jsonwebtoken';
@@ -116,6 +118,34 @@ export async function POST(
       recordedBy: session.userId,
       paidAt: paidAt ? new Date(paidAt) : new Date(),
     });
+
+    // 1. Notify Student about payment confirmation
+    try {
+      await sendPushToUser(String(studentId), 'student', {
+        title: '💰 Fee Payment Received',
+        body: `Your fee payment of ₹${parsedAmount.toLocaleString('en-IN')} for ${monthYear} was recorded successfully.`,
+        url: '/student/dashboard'
+      });
+    } catch (pushErr) {
+      console.error('Student fee push notification error:', pushErr);
+    }
+
+    // 2. Notify all Admins about fee received
+    try {
+      const studentObj = await Student.findById(studentId).select('name');
+      const studentName = studentObj ? studentObj.name : 'A student';
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      const adminPushPromises = admins.map(admin =>
+        sendPushToUser(String(admin._id), 'staff', {
+          title: '💰 Fee Received',
+          body: `${studentName} paid ₹${parsedAmount.toLocaleString('en-IN')} for ${monthYear}.`,
+          url: '/admin/dashboard'
+        }).catch(err => console.error('Admin fee push error:', err))
+      );
+      await Promise.all(adminPushPromises);
+    } catch (adminPushErr) {
+      console.error('Admin fee push notification error:', adminPushErr);
+    }
 
     const breakdown = await getUpdatedBreakdown(studentId);
     return NextResponse.json({ success: true, breakdown });
