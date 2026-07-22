@@ -89,22 +89,22 @@ export async function POST(req: Request) {
 
       await Attendance.bulkWrite(operations);
 
-      // Trigger push notifications in the background for students marked absent
+      // Trigger push notifications in the background for students
       try {
         const formattedDate = new Date(date).toLocaleDateString('en-US', {
           day: 'numeric',
           month: 'short',
           year: 'numeric'
         });
-        records.forEach((rec: any) => {
-          if (rec.status === 'absent') {
-            sendPushToUser(rec.studentId, 'student', {
-              title: 'Attendance Update',
-              body: `You were marked absent on ${formattedDate}.`,
-              url: '/student/dashboard'
-            }).catch(err => console.error('Push notification trigger error:', err));
-          }
+        const pushPromises = records.map((rec: any) => {
+          const statusText = rec.status === 'present' ? 'Present' : 'Absent';
+          return sendPushToUser(rec.studentId, 'student', {
+            title: 'Attendance Update',
+            body: `You were marked ${statusText} for ${subject} on ${formattedDate}.`,
+            url: '/student/dashboard'
+          }).catch(err => console.error('Push notification trigger error:', err));
         });
+        await Promise.all(pushPromises);
       } catch (dateErr) {
         console.error('Date parsing error for push notification:', dateErr);
       }
@@ -155,22 +155,21 @@ export async function POST(req: Request) {
       },
     );
 
-    // Trigger push notification in the background if student was marked absent
-    if (status === 'absent') {
-      try {
-        const formattedDate = new Date(date).toLocaleDateString('en-US', {
-          day: 'numeric',
-          month: 'short',
-          year: 'numeric'
-        });
-        sendPushToUser(studentId, 'student', {
-          title: 'Attendance Update',
-          body: `You were marked absent on ${formattedDate}.`,
-          url: '/student/dashboard'
-        }).catch(err => console.error('Push notification trigger error:', err));
-      } catch (dateErr) {
-        console.error('Date parsing error for push notification:', dateErr);
-      }
+    // Trigger push notification in the background
+    try {
+      const formattedDate = new Date(date).toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric'
+      });
+      const statusText = status === 'present' ? 'Present' : 'Absent';
+      await sendPushToUser(studentId, 'student', {
+        title: 'Attendance Update',
+        body: `You were marked ${statusText} for ${subject} on ${formattedDate}.`,
+        url: '/student/dashboard'
+      }).catch(err => console.error('Push notification trigger error:', err));
+    } catch (dateErr) {
+      console.error('Date parsing error for push notification:', dateErr);
     }
     
     return NextResponse.json(attendance, { status: 201 });

@@ -90,14 +90,15 @@ export async function POST(req: Request) {
 
       await TestMark.bulkWrite(operations);
 
-      // Trigger push notifications in the background
-      records.forEach((rec: any) => {
+      // Trigger push notifications in the background (await all before returning response)
+      const pushPromises = records.map((rec: any) =>
         sendPushToUser(rec.studentId, 'student', {
           title: 'New Marks Added',
-          body: `Your marks for ${testName} have been added.`,
+          body: `Your marks for ${testName} (${subject}) have been added.`,
           url: '/student/dashboard'
-        }).catch(err => console.error('Push notification trigger error:', err));
-      });
+        }).catch(err => console.error('Push notification trigger error:', err))
+      );
+      await Promise.all(pushPromises);
 
       return NextResponse.json({ message: `Test marks saved for ${records.length} students` });
     }
@@ -148,9 +149,9 @@ export async function POST(req: Request) {
     );
 
     // Trigger push notification in the background
-    sendPushToUser(studentId, 'student', {
+    await sendPushToUser(studentId, 'student', {
       title: 'New Marks Added',
-      body: `Your marks for ${testName} have been added.`,
+      body: `Your marks for ${testName} (${subject}) have been added.`,
       url: '/student/dashboard'
     }).catch(err => console.error('Push notification trigger error:', err));
 

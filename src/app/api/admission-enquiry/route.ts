@@ -44,13 +44,14 @@ export async function POST(req: Request) {
     // Notify all admin users via push notification
     try {
       const admins = await User.find({ role: 'admin' }).select('_id');
-      admins.forEach((admin) => {
+      const pushPromises = admins.map((admin) =>
         sendPushToUser(admin._id.toString(), 'staff', {
           title: 'New Admission Enquiry',
           body: `${name.trim()} submitted an admission enquiry.`,
           url: '/admin/dashboard'
-        }).catch(err => console.error('Push notification trigger error:', err));
-      });
+        }).catch(err => console.error('Push notification trigger error:', err))
+      );
+      await Promise.all(pushPromises);
     } catch (pushErr) {
       console.error('Failed to query admins for push notification:', pushErr);
     }
