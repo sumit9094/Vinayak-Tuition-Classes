@@ -346,11 +346,13 @@ export default function AdminDashboardPage() {
       const pendingItems = breakdown.filter((b: any) => !b.paid);
       const totalPending = pendingItems.reduce((sum: number, b: any) => sum + b.amount, 0);
 
+      const targetStudentId = student.id || student._id;
+
       const res = await fetch('/api/fees/remind', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentId: student._id,
+          studentId: targetStudentId,
           totalPending
         })
       });
