@@ -90,14 +90,16 @@ export async function POST(req: Request) {
 
       await TestMark.bulkWrite(operations);
 
-      // Trigger push notifications in the background (await all before returning response)
-      const pushPromises = records.map((rec: any) =>
-        sendPushToUser(rec.studentId, 'student', {
-          title: 'New Marks Added',
-          body: `Your marks for ${testName} (${subject}) have been added.`,
-          url: '/student/dashboard'
-        }).catch(err => console.error('Push notification trigger error:', err))
-      );
+      // Trigger push notifications in the background for students whose marks were actually entered
+      const pushPromises = records
+        .filter((rec: any) => rec.marksObtained !== null && rec.marksObtained !== undefined && rec.marksObtained !== '')
+        .map((rec: any) =>
+          sendPushToUser(String(rec.studentId), 'student', {
+            title: 'New Marks Added',
+            body: `Your marks for ${testName} (${subject}) have been added: ${rec.marksObtained}/${totalMarks}`,
+            url: '/student/dashboard'
+          }).catch(err => console.error('Push notification trigger error:', err))
+        );
       await Promise.all(pushPromises);
 
       return NextResponse.json({ message: `Test marks saved for ${records.length} students` });
@@ -149,9 +151,9 @@ export async function POST(req: Request) {
     );
 
     // Trigger push notification in the background
-    await sendPushToUser(studentId, 'student', {
+    await sendPushToUser(String(studentId), 'student', {
       title: 'New Marks Added',
-      body: `Your marks for ${testName} (${subject}) have been added.`,
+      body: `Your marks for ${testName} (${subject}) have been added: ${marksObtained}/${totalMarks}`,
       url: '/student/dashboard'
     }).catch(err => console.error('Push notification trigger error:', err));
 

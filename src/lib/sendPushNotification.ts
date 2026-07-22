@@ -29,10 +29,16 @@ export async function sendPushToUser(
 ) {
   try {
     await connectDB();
+    const targetUserId = String(userId);
 
-    const subscriptions = await PushSubscription.find({ userId, userType });
+    const subscriptions = await PushSubscription.find({ userId: targetUserId, userType });
 
-    if (subscriptions.length === 0) return;
+    if (subscriptions.length === 0) {
+      console.log(`[Push Notification] No subscriptions found for user ${targetUserId} (${userType})`);
+      return;
+    }
+
+    console.log(`[Push Notification] Found ${subscriptions.length} subscription(s) for user ${targetUserId} (${userType})`);
 
     const jsonPayload = JSON.stringify(payload);
 
