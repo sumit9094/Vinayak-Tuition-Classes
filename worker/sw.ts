@@ -24,7 +24,7 @@ self.addEventListener('push', (event: any) => {
     const options = {
       body: data.body || '',
       icon: '/logo.png',
-      badge: '/logo.png',
+      badge: '/badge.png',
       vibrate: [200, 100, 200],
       tag: 'vtc-notification-' + Date.now(),
       requireInteraction: true,
