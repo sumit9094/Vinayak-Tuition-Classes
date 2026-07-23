@@ -161,8 +161,11 @@ export default function ReviewsSection({ initialReviews }: { initialReviews?: Te
 
   return (
     <section id="reviews" className="py-24 bg-slate-50 dark:bg-darkObsidian relative overflow-hidden">
-      {/* Decorative Blob */}
-      <div className="absolute top-1/2 right-0 w-96 h-96 bg-accentCyan/5 rounded-full mix-blend-screen filter blur-[40px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+      {/* Decorative Blob (Blur-free CSS radial gradient for WebKit performance) */}
+      <div 
+        className="absolute top-1/2 right-0 w-96 h-96 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"
+        style={{ background: 'radial-gradient(circle at center, rgba(6,182,212,0.08) 0%, transparent 70%)' }}
+      ></div>
 
       <div className="container mx-auto px-4 relative z-10">
         <SectionHeading 

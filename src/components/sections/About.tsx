@@ -143,8 +143,11 @@ export default function About() {
               </div>
             </GlassCard>
 
-            {/* Decorative blob */}
-            <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-accentViolet/5 rounded-full blur-[40px] pointer-events-none"></div>
+            {/* Decorative blob (blur-free CSS radial gradient for WebKit performance) */}
+            <div 
+              className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] rounded-full pointer-events-none"
+              style={{ background: 'radial-gradient(circle at center, rgba(139,92,246,0.08) 0%, transparent 70%)' }}
+            ></div>
           </div>
 
         </div>

@@ -63,8 +63,11 @@ export default function AdmissionForm() {
 
   return (
     <section id="admission" className="relative py-24 bg-white dark:bg-slate-950 transition-colors duration-300 overflow-hidden">
-      {/* Decorative Blob */}
-      <div className="absolute top-1/2 left-0 w-96 h-96 bg-accentViolet/5 rounded-full mix-blend-screen filter blur-[40px] -translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
+      {/* Decorative Blob (Blur-free CSS radial gradient for WebKit performance) */}
+      <div 
+        className="absolute top-1/2 left-0 w-96 h-96 rounded-full -translate-y-1/2 -translate-x-1/2 pointer-events-none"
+        style={{ background: 'radial-gradient(circle at center, rgba(139,92,246,0.08) 0%, transparent 70%)' }}
+      ></div>
 
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         <SectionHeading 

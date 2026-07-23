@@ -22,7 +22,7 @@ export default function Medium() {
           
           {/* English Medium Card */}
           <div className="group relative perspective-1000">
-            <div className="absolute inset-0 bg-gradient-to-r from-accentViolet to-cyan-400 rounded-3xl blur-lg opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-accentViolet to-cyan-400 rounded-3xl opacity-10 group-hover:opacity-25 transition-opacity duration-500"></div>
             <GlassCard 
               className="relative h-full flex flex-col items-center justify-center text-center p-8 sm:p-14 transition-transform duration-500 group-hover:rotate-y-12 transform-style-3d border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 shadow-[0_10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.3)] hover:border-accentViolet/30 transition-all duration-300"
               hoverGlow={false}
@@ -36,7 +36,7 @@ export default function Medium() {
 
           {/* Gujarati Medium Card */}
           <div className="group relative perspective-1000">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-3xl blur-lg opacity-10 group-hover:opacity-20 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-yellow-400 rounded-3xl opacity-10 group-hover:opacity-25 transition-opacity duration-500"></div>
             <GlassCard 
               className="relative h-full flex flex-col items-center justify-center text-center p-8 sm:p-14 transition-transform duration-500 group-hover:-rotate-y-12 transform-style-3d border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 shadow-[0_10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.3)] hover:border-orange-500/30 transition-all duration-300"
               hoverGlow={false}
