@@ -859,7 +859,6 @@ export default function AdminDashboardPage() {
                       <th className="py-3 px-4">Name</th>
                       <th className="py-3 px-4">Branch Office</th>
                       <th className="py-3 px-4">Standard</th>
-                      <th className="py-3 px-4">Subjects (Auto)</th>
                       <th className="py-3 px-4">Phone</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
@@ -882,16 +881,6 @@ export default function AdminDashboardPage() {
                         </td>
                         <td className="py-4 px-4 font-semibold text-slate-600 dark:text-slate-400">
                           Std. {st.standard}
-                        </td>
-                        <td className="py-4 px-4">
-                          <div className="flex flex-wrap gap-1">
-                            {st.subjects.map((sub, idx) => (
-                              <span key={idx} className="bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded text-[9px] font-bold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800">
-                                {sub}
-                              </span>
-                            ))}
-                            {st.subjects.length === 0 && <span className="text-slate-400 font-semibold">-</span>}
-                          </div>
                         </td>
                         <td className="py-4 px-4 font-bold text-slate-500 dark:text-slate-500">
                           {st.phone || st.parentContact || 'N/A'}
