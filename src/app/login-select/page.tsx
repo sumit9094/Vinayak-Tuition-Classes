@@ -20,7 +20,7 @@ export default function LoginSelectPage() {
       icon: User,
       color: 'from-blue-500 to-indigo-600',
       accentBorder: 'border-l-blue-500',
-      badge: isGj ? 'મુખ્ય પોર્ટલ' : 'Most Common',
+      badge: null,
       target: '/login',
       isPrimary: true,
     },
