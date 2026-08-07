@@ -23,6 +23,7 @@ import {
   Copy,
   ExternalLink,
   Download,
+  Loader2,
   X,
   Home,
   ChevronRight
@@ -99,6 +100,40 @@ function StudentDashboardContent() {
   // Payment Notification States & Rate Limiting Cooldown
   const [notifyingPayment, setNotifyingPayment] = useState<boolean>(false);
   const [notifySuccessMsg, setNotifySuccessMsg] = useState<string | null>(null);
+  const [downloadingReceiptId, setDownloadingReceiptId] = useState<string | null>(null);
+
+  const handleDownloadReceipt = async (paymentId: string, monthYear: string) => {
+    if (!paymentId) return;
+    setDownloadingReceiptId(paymentId);
+    try {
+      const res = await fetch(`/api/fees/receipt/${paymentId}`);
+
+      if (!res.ok) {
+        let errText = 'Failed to download receipt';
+        try {
+          const errJson = await res.json();
+          errText = errJson.error || errText;
+        } catch (e) {}
+        alert(`Receipt Download Error: ${errText}`);
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `receipt-${monthYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('Download receipt error:', err);
+      alert('Network error downloading receipt. Please try again.');
+    } finally {
+      setDownloadingReceiptId(null);
+    }
+  };
 
   const handleOpenClaimModal = (monthYear?: string, amount?: number) => {
     const firstUnpaid = feesBreakdown.find((b: any) => !b.paid);
@@ -767,17 +802,23 @@ function StudentDashboardContent() {
                                   <span>Paid</span>
                                 </span>
                                 {item.paymentId && (
-                                  <a
-                                    href={`/api/fees/receipt/${item.paymentId}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    download={`receipt-${item.monthYear}.pdf`}
-                                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-black bg-[#8B5CF6]/10 text-[#8B5CF6] hover:bg-[#8B5CF6]/20 border border-[#8B5CF6]/20 transition-all cursor-pointer shadow-sm active:scale-95"
+                                  <button
+                                    onClick={() => handleDownloadReceipt(item.paymentId, item.monthYear)}
+                                    disabled={downloadingReceiptId === item.paymentId}
+                                    className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-xl text-[10px] font-black bg-[#8B5CF6]/10 text-[#8B5CF6] hover:bg-[#8B5CF6]/20 border border-[#8B5CF6]/20 transition-all cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
                                     title={language === 'EN' ? 'Download Fee Receipt PDF' : 'ફી રસીદ PDF ડાઉનલોડ કરો'}
                                   >
-                                    <Download className="w-3 h-3 text-[#8B5CF6]" />
-                                    <span>{language === 'EN' ? 'Receipt' : 'રસીદ'}</span>
-                                  </a>
+                                    {downloadingReceiptId === item.paymentId ? (
+                                      <Loader2 className="w-3 h-3 animate-spin text-[#8B5CF6]" />
+                                    ) : (
+                                      <Download className="w-3 h-3 text-[#8B5CF6]" />
+                                    )}
+                                    <span>
+                                      {downloadingReceiptId === item.paymentId
+                                        ? (language === 'EN' ? 'Saving...' : 'સેવ થઈ રહ્યું છે...')
+                                        : (language === 'EN' ? 'Receipt' : 'રસીદ')}
+                                    </span>
+                                  </button>
                                 )}
                               </div>
                             ) : pendingClaim ? (

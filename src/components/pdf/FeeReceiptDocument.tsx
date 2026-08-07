@@ -1,15 +1,18 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, Font, StyleSheet } from '@react-pdf/renderer';
-import path from 'path';
 
-// Register fonts for PDF generation
-const fontDir = path.join(process.cwd(), 'src', 'fonts');
+// Register Gujarati TTF fonts with high-reliability Google Fonts CDN URLs
+// This ensures font rendering never fails on Vercel Serverless Functions
+const gujaratiRegularUrl =
+  'https://fonts.gstatic.com/s/notosansgujarati/v27/wlpWgx_HC1ti5ViekvcxnhMlCVo3f5pv17ivlzsUB14gg1TMR2Gw4VceEl7MA_ypFwPM_OdiEUUv.ttf';
+const gujaratiBoldUrl =
+  'https://fonts.gstatic.com/s/notosansgujarati/v27/wlpWgx_HC1ti5ViekvcxnhMlCVo3f5pv17ivlzsUB14gg1TMR2Gw4VceEl7MA_xOEAPM_OdiEUUv.ttf';
 
 Font.register({
   family: 'NotoSansGujarati',
   fonts: [
-    { src: path.join(fontDir, 'NotoSansGujarati-Regular.ttf'), fontWeight: 'normal' },
-    { src: path.join(fontDir, 'NotoSansGujarati-Bold.ttf'), fontWeight: 'bold' },
+    { src: gujaratiRegularUrl, fontWeight: 'normal' },
+    { src: gujaratiBoldUrl, fontWeight: 'bold' },
   ],
 });
 
@@ -213,7 +216,6 @@ export const FeeReceiptDocument: React.FC<FeeReceiptProps> = ({
   logoPath,
   stampPath,
 }) => {
-  // Format branch name nicely
   const formatBranch = (b: string) => {
     if (!b) return isGujarati ? 'વિનાયક ૧ - શિવમ' : 'Vinayak 1 - Shivam';
     if (b.toUpperCase().includes('RAILWAY')) {
@@ -222,7 +224,6 @@ export const FeeReceiptDocument: React.FC<FeeReceiptProps> = ({
     return isGujarati ? 'વિનાયક ૧ - શિવમ' : 'Vinayak 1 - Shivam';
   };
 
-  // Format standard nicely
   const formatStandard = (s: string) => {
     if (isGujarati) {
       const stdGJMap: Record<string, string> = {
@@ -243,11 +244,10 @@ export const FeeReceiptDocument: React.FC<FeeReceiptProps> = ({
     }
   };
 
-  // Format payment mode nicely
   const formatMode = (m: string) => {
     if (m === 'upi') return 'UPI';
     if (m === 'cash') return isGujarati ? 'રોકડ' : 'Cash';
-    return m.toUpperCase();
+    return m ? m.toUpperCase() : '-';
   };
 
   return (
@@ -345,7 +345,7 @@ export const FeeReceiptDocument: React.FC<FeeReceiptProps> = ({
               {isGujarati ? 'ચુકવેલ રકમ' : 'Amount Paid'}
             </Text>
             <View style={styles.amountBox}>
-              <Text style={styles.amountText}>₹ {amount.toLocaleString('en-IN')}</Text>
+              <Text style={styles.amountText}>₹ {amount ? amount.toLocaleString('en-IN') : '0'}</Text>
             </View>
           </View>
         </View>

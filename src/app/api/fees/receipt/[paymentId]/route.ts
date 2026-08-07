@@ -11,6 +11,20 @@ import { ensureReceiptNumber } from '@/lib/receiptNumber';
 import { numberToWordsIndian } from '@/lib/numberToWords';
 import { FeeReceiptDocument } from '@/components/pdf/FeeReceiptDocument';
 
+function getBase64DataUri(relativePath: string): string | undefined {
+  try {
+    const fullPath = path.join(process.cwd(), relativePath);
+    if (fs.existsSync(fullPath)) {
+      const fileBuffer = fs.readFileSync(fullPath);
+      const mime = relativePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+      return `data:${mime};base64,${fileBuffer.toString('base64')}`;
+    }
+  } catch (err) {
+    console.error('Error reading image for PDF:', relativePath, err);
+  }
+  return undefined;
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ paymentId: string }> }
@@ -18,7 +32,7 @@ export async function GET(
   try {
     const session = await getSession();
     if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized — Please login again' }, { status: 401 });
     }
 
     await connectDB();
@@ -30,16 +44,17 @@ export async function GET(
     }
 
     const student = payment.studentId as any;
+    const studentIdStr = student._id ? student._id.toString() : String(student);
 
     // Security Authorization Check:
-    // User must be either the student who owns the payment OR an admin/teacher
-    const isOwnerStudent =
-      session.type === 'student' &&
-      (session.studentId === student._id.toString() || session.userId === student._id.toString());
-    const isStaff = session.role === 'admin' || session.role === 'teacher';
+    // User must be either the student who owns the payment OR an admin/teacher staff
+    const sessionStudentId = session.studentId || session.userId || (session as any)._id;
+    const isOwnerStudent = Boolean(sessionStudentId && String(sessionStudentId) === String(studentIdStr));
+    const isStaff = session.type === 'staff' || session.role === 'admin' || session.role === 'teacher';
 
     if (!isOwnerStudent && !isStaff) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      console.warn('Receipt access denied:', { sessionStudentId, studentIdStr, sessionType: session.type });
+      return NextResponse.json({ error: 'Access denied to this fee receipt' }, { status: 403 });
     }
 
     // Ensure permanent sequential receipt number is assigned (e.g. #0001)
@@ -50,15 +65,15 @@ export async function GET(
     const isGujarati = studentMedium === 'gujarati' || studentMedium === 'gj';
 
     // Format paidAt date as DD/MM/YYYY
-    const paidDate = payment.paidAt ? new Date(payment.paidAt) : new Date(payment.createdAt);
+    const paidDate = payment.paidAt ? new Date(payment.paidAt) : new Date(payment.createdAt || Date.now());
     const day = paidDate.getDate().toString().padStart(2, '0');
     const month = (paidDate.getMonth() + 1).toString().padStart(2, '0');
     const year = paidDate.getFullYear();
     const dateStr = `${day}/${month}/${year}`;
 
     // Format Fees Month
-    const [yStr, mStr] = payment.monthYear.split('-');
-    const mNum = parseInt(mStr, 10) - 1;
+    const [yStr, mStr] = (payment.monthYear || '').split('-');
+    const mNum = parseInt(mStr || '1', 10) - 1;
     const monthsEN = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
@@ -73,30 +88,26 @@ export async function GET(
       : `${monthsEN[mNum] || mStr} ${yStr}`;
 
     // Amount in Words
-    const amountInWords = numberToWordsIndian(payment.amount, isGujarati ? 'gj' : 'en');
+    const amountInWords = numberToWordsIndian(payment.amount || 0, isGujarati ? 'gj' : 'en');
 
-    // Asset paths for logo and official stamp image
-    const publicDir = path.join(process.cwd(), 'public');
-    const logoPath = path.join(publicDir, 'logo.png');
-    const stampPath = path.join(publicDir, 'vinayak-official-seal-stamp.png');
-
-    const logoExists = fs.existsSync(logoPath);
-    const stampExists = fs.existsSync(stampPath);
+    // Get Base64 image URIs so images load 100% reliably in Vercel serverless function
+    const logoDataUri = getBase64DataUri('public/logo.png');
+    const stampDataUri = getBase64DataUri('public/vinayak-official-seal-stamp.png');
 
     // Render PDF Document to Buffer
     const pdfElement = React.createElement(FeeReceiptDocument, {
       receiptNumber,
       dateStr,
-      studentName: student.name,
-      standard: student.standard,
-      branch: student.branch,
+      studentName: student.name || 'Student',
+      standard: student.standard || '',
+      branch: student.branch || '',
       feesMonth,
-      paymentMode: payment.mode,
-      amount: payment.amount,
+      paymentMode: payment.mode || 'cash',
+      amount: payment.amount || 0,
       amountInWords,
       isGujarati,
-      logoPath: logoExists ? logoPath : undefined,
-      stampPath: stampExists ? stampPath : undefined,
+      logoPath: logoDataUri,
+      stampPath: stampDataUri,
     });
 
     const pdfBuffer = await renderToBuffer(pdfElement as any);
@@ -106,14 +117,14 @@ export async function GET(
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${safeFilename}"`,
+        'Content-Disposition': `attachment; filename="${safeFilename}"`,
         'Cache-Control': 'no-store, max-age=0',
       },
     });
   } catch (error: any) {
     console.error('PDF Receipt Generation Error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate receipt PDF' },
+      { error: 'Failed to generate receipt PDF', details: error.message },
       { status: 500 }
     );
   }
