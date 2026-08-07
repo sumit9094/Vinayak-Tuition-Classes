@@ -33,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const handleSignOut = () => {
     logout();
-    router.push('/login');
+    router.push('/login-select');
   };
 
   return (

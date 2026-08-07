@@ -14,7 +14,7 @@ export default function Header() {
   const { user, logout } = useAuth();
   const handleHeaderLogout = () => {
     logout();
-    window.location.href = '/login';
+    window.location.href = '/login-select';
   };
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);

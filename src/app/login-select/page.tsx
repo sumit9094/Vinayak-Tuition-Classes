@@ -20,7 +20,7 @@ export default function LoginSelectPage() {
       icon: User,
       color: 'from-cyan-500 to-blue-600',
       badgeBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20',
-      target: '/register',
+      target: '/login',
     },
     {
       id: 'teacher',
