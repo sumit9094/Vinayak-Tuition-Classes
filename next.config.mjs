@@ -13,7 +13,7 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  turbopack: {},
+  serverExternalPackages: ['@react-pdf/renderer'],
   outputFileTracingIncludes: {
     '/api/fees/receipt/[paymentId]': ['./public/**/*', './src/fonts/**/*'],
   },
