@@ -1,0 +1,105 @@
+import { NextResponse } from 'next/server';
+import { connectDB } from '@/lib/mongodb';
+import Review from '@/models/Review';
+import User from '@/models/User';
+import { getSession } from '@/lib/auth';
+import { sendPushToUser } from '@/lib/sendPushNotification';
+
+// GET: Fetch reviews
+// - Public: Returns only approved reviews
+// - Admin/Protected (when query parameter status=all or approved=false is passed): Returns matching reviews
+export async function GET(req: Request) {
+  try {
+    await connectDB();
+    
+    const { searchParams } = new URL(req.url);
+    const statusParam = searchParams.get('status'); // e.g. "all", "pending"
+    
+    // Check if requester wants all/pending reviews (requires Admin authentication)
+    if (statusParam === 'all' || statusParam === 'pending') {
+      const session = await getSession();
+      if (!session || session.role !== 'admin') {
+        return NextResponse.json(
+          { error: 'Access denied: Admins only' },
+          { status: 403 }
+        );
+      }
+      
+      // Admin authenticated: return reviews based on statusParam
+      const filter = statusParam === 'pending' ? { approved: false } : {};
+      const reviews = await Review.find(filter).sort({ createdAt: -1 });
+      return NextResponse.json({ reviews });
+    }
+    
+    // Default public: return only approved reviews, sorted by most recent
+    const reviews = await Review.find({ approved: true }).sort({ createdAt: -1 });
+    return NextResponse.json({ reviews });
+  } catch (error) {
+    console.error('Reviews GET API Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch reviews' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Submit a new review (Public - sets approved to false by default)
+export async function POST(req: Request) {
+  try {
+    await connectDB();
+    
+    const body = await req.json();
+    const { name, message, rating } = body;
+    
+    if (!name || !message || rating === undefined) {
+      return NextResponse.json(
+        { error: 'Please provide all required fields' },
+        { status: 400 }
+      );
+    }
+    
+    const ratingNum = Number(rating);
+    if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+      return NextResponse.json(
+        { error: 'Rating must be a number between 1 and 5' },
+        { status: 400 }
+      );
+    }
+    
+    const newReview = await Review.create({
+      name,
+      message,
+      rating: ratingNum,
+      approved: false, // Default is false, requires admin approval
+    });
+
+    // Notify all admin users via push notification
+    try {
+      const admins = await User.find({ role: 'admin' }).select('_id');
+      const pushPromises = admins.map((admin) =>
+        sendPushToUser(admin._id.toString(), 'staff', {
+          title: 'New Review Pending',
+          body: `${name} submitted a new review awaiting approval.`,
+          url: '/admin/dashboard?tab=reviews'
+        }).catch(err => console.error('Push notification trigger error:', err))
+      );
+      await Promise.all(pushPromises);
+    } catch (pushErr) {
+      console.error('Failed to query admins for push notification:', pushErr);
+    }
+    
+    return NextResponse.json(
+      {
+        message: 'Review submitted successfully. It will be visible after approval.',
+        review: newReview,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error('Reviews POST API Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to submit review' },
+      { status: 500 }
+    );
+  }
+}

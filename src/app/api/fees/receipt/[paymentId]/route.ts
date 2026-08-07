@@ -1,0 +1,120 @@
+import { NextRequest, NextResponse } from 'next/server';
+import path from 'path';
+import fs from 'fs';
+import { renderToBuffer } from '@react-pdf/renderer';
+import React from 'react';
+import { getSession } from '@/lib/auth';
+import { connectDB } from '@/lib/mongodb';
+import FeePayment from '@/models/FeePayment';
+import Student from '@/models/Student';
+import { ensureReceiptNumber } from '@/lib/receiptNumber';
+import { numberToWordsIndian } from '@/lib/numberToWords';
+import { FeeReceiptDocument } from '@/components/pdf/FeeReceiptDocument';
+
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ paymentId: string }> }
+) {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+    const { paymentId } = await params;
+
+    const payment = await FeePayment.findById(paymentId).populate('studentId');
+    if (!payment || !payment.studentId) {
+      return NextResponse.json({ error: 'Fee payment record not found' }, { status: 404 });
+    }
+
+    const student = payment.studentId as any;
+
+    // Security Authorization Check:
+    // User must be either the student who owns the payment OR an admin/teacher
+    const isOwnerStudent =
+      session.type === 'student' &&
+      (session.studentId === student._id.toString() || session.userId === student._id.toString());
+    const isStaff = session.role === 'admin' || session.role === 'teacher';
+
+    if (!isOwnerStudent && !isStaff) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+    }
+
+    // Ensure permanent sequential receipt number is assigned (e.g. #0001)
+    const receiptNumber = await ensureReceiptNumber(payment);
+
+    // Determine language from student.medium
+    const studentMedium = (student.medium || '').toString().trim().toLowerCase();
+    const isGujarati = studentMedium === 'gujarati' || studentMedium === 'gj';
+
+    // Format paidAt date as DD/MM/YYYY
+    const paidDate = payment.paidAt ? new Date(payment.paidAt) : new Date(payment.createdAt);
+    const day = paidDate.getDate().toString().padStart(2, '0');
+    const month = (paidDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = paidDate.getFullYear();
+    const dateStr = `${day}/${month}/${year}`;
+
+    // Format Fees Month
+    const [yStr, mStr] = payment.monthYear.split('-');
+    const mNum = parseInt(mStr, 10) - 1;
+    const monthsEN = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthsGJ = [
+      'જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન',
+      'જુલાઈ', 'ઓગસ્ટ', 'સપ્ટેમ્બર', 'ઓક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર'
+    ];
+
+    const feesMonth = isGujarati
+      ? `${monthsGJ[mNum] || mStr} ${yStr}`
+      : `${monthsEN[mNum] || mStr} ${yStr}`;
+
+    // Amount in Words
+    const amountInWords = numberToWordsIndian(payment.amount, isGujarati ? 'gj' : 'en');
+
+    // Asset paths for logo and official stamp image
+    const publicDir = path.join(process.cwd(), 'public');
+    const logoPath = path.join(publicDir, 'logo.png');
+    const stampPath = path.join(publicDir, 'vinayak-official-seal-stamp.png');
+
+    const logoExists = fs.existsSync(logoPath);
+    const stampExists = fs.existsSync(stampPath);
+
+    // Render PDF Document to Buffer
+    const pdfElement = React.createElement(FeeReceiptDocument, {
+      receiptNumber,
+      dateStr,
+      studentName: student.name,
+      standard: student.standard,
+      branch: student.branch,
+      feesMonth,
+      paymentMode: payment.mode,
+      amount: payment.amount,
+      amountInWords,
+      isGujarati,
+      logoPath: logoExists ? logoPath : undefined,
+      stampPath: stampExists ? stampPath : undefined,
+    });
+
+    const pdfBuffer = await renderToBuffer(pdfElement as any);
+
+    const safeFilename = `receipt-${receiptNumber.replace('#', '')}.pdf`;
+
+    return new NextResponse(new Uint8Array(pdfBuffer), {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${safeFilename}"`,
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
+  } catch (error: any) {
+    console.error('PDF Receipt Generation Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to generate receipt PDF' },
+      { status: 500 }
+    );
+  }
+}
