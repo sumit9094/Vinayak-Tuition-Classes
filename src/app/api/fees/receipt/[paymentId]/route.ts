@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import path from 'path';
-import fs from 'fs';
 import mongoose from 'mongoose';
-import { renderToBuffer } from '@react-pdf/renderer';
 import { getSession } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import FeePayment from '@/models/FeePayment';
@@ -10,7 +7,7 @@ import Student from '@/models/Student';
 import User from '@/models/User';
 import { ensureReceiptNumber } from '@/lib/receiptNumber';
 import { numberToWordsIndian } from '@/lib/numberToWords';
-import { FeeReceiptDocument } from '@/components/pdf/FeeReceiptDocument';
+import { generateFeeReceiptPdf } from '@/lib/pdfGenerator';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -18,20 +15,6 @@ export const dynamic = 'force-dynamic';
 // Prevent Webpack tree-shaking of Mongoose models required for .populate()
 const _registeredModels = [Student, FeePayment, User];
 void _registeredModels;
-
-function getBase64DataUri(relativePath: string): string | undefined {
-  try {
-    const fullPath = path.join(process.cwd(), relativePath);
-    if (fs.existsSync(fullPath)) {
-      const fileBuffer = fs.readFileSync(fullPath);
-      const mime = relativePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
-      return `data:${mime};base64,${fileBuffer.toString('base64')}`;
-    }
-  } catch (err) {
-    console.error('Error reading image for PDF:', relativePath, err);
-  }
-  return undefined;
-}
 
 export async function GET(
   req: NextRequest,
@@ -102,12 +85,8 @@ export async function GET(
     // Amount in Words
     const amountInWords = numberToWordsIndian(payment.amount || 0, isGujarati ? 'gj' : 'en');
 
-    // Get Base64 image URIs so images load 100% reliably in Vercel serverless function
-    const logoDataUri = getBase64DataUri('public/logo.png');
-    const stampDataUri = getBase64DataUri('public/vinayak-official-seal-stamp.png');
-
-    // Render PDF Document to Buffer
-    const pdfElement = FeeReceiptDocument({
+    // Generate PDF Buffer via PDFKit (100% serverless native PDF generator, 0 React reconciler conflicts)
+    const pdfBuffer = await generateFeeReceiptPdf({
       receiptNumber,
       dateStr,
       studentName: student.name || 'Student',
@@ -118,11 +97,7 @@ export async function GET(
       amount: payment.amount || 0,
       amountInWords,
       isGujarati,
-      logoPath: logoDataUri,
-      stampPath: stampDataUri,
     });
-
-    const pdfBuffer = await renderToBuffer(pdfElement as any);
 
     const safeFilename = `receipt-${receiptNumber.replace('#', '')}.pdf`;
 
