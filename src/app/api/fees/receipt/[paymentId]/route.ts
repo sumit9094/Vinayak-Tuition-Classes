@@ -3,7 +3,6 @@ import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
 import { renderToBuffer } from '@react-pdf/renderer';
-import React from 'react';
 import { getSession } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import FeePayment from '@/models/FeePayment';
@@ -105,7 +104,7 @@ export async function GET(
     const stampDataUri = getBase64DataUri('public/vinayak-official-seal-stamp.png');
 
     // Render PDF Document to Buffer
-    const pdfElement = React.createElement(FeeReceiptDocument, {
+    const pdfElement = FeeReceiptDocument({
       receiptNumber,
       dateStr,
       studentName: student.name || 'Student',
