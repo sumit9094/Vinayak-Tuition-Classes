@@ -16,11 +16,6 @@ import { FeeReceiptDocument } from '@/components/pdf/FeeReceiptDocument';
 const _registeredModels = [Student, FeePayment, User];
 void _registeredModels;
 
-// Override react-pdf reconciler React version to prevent serverless React 18/19 reconciler mismatch
-if (typeof process !== 'undefined' && process.env) {
-  process.env.OVERRIDE_REACT_PDF_RECONCILER_REACT_VERSION = '18.2.0';
-}
-
 function getBase64DataUri(relativePath: string): string | undefined {
   try {
     const fullPath = path.join(process.cwd(), relativePath);
