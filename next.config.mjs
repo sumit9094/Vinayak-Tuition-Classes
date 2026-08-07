@@ -15,9 +15,6 @@ const nextConfig = {
   reactStrictMode: true,
   turbopack: {},
   serverExternalPackages: ['@react-pdf/renderer'],
-  experimental: {
-    serverComponentsExternalPackages: ['@react-pdf/renderer'],
-  },
   outputFileTracingIncludes: {
     '/api/fees/receipt/[paymentId]': ['./public/**/*', './src/fonts/**/*'],
     '/api/test-pdf': ['./public/**/*', './src/fonts/**/*'],
