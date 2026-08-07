@@ -14,10 +14,8 @@ const withPWA = withPWAInit({
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {},
-  serverExternalPackages: ['@react-pdf/renderer'],
   outputFileTracingIncludes: {
-    '/api/fees/receipt/[paymentId]': ['./public/**/*', './src/fonts/**/*'],
-    '/api/test-pdf': ['./public/**/*', './src/fonts/**/*'],
+    '/api/**/*': ['./node_modules/pdfkit/js/data/**/*', './public/**/*'],
   },
 };
 

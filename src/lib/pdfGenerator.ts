@@ -18,7 +18,7 @@ export interface FeeReceiptPdfData {
 export function generateFeeReceiptPdf(data: FeeReceiptPdfData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
-      const doc = new PDFDocument({ size: 'A5', margin: 25 });
+      const doc = new PDFDocument({ size: 'A5', margin: 25, autoFirstPage: false });
       const chunks: Buffer[] = [];
 
       doc.on('data', (chunk) => chunks.push(chunk));
@@ -38,7 +38,7 @@ export function generateFeeReceiptPdf(data: FeeReceiptPdfData): Promise<Buffer> 
         isGujarati,
       } = data;
 
-      // Register Gujarati Unicode TTF Fonts
+      // Register Fonts
       const fontsDir = path.join(process.cwd(), 'public', 'fonts');
       const regFontPath = path.join(fontsDir, 'NotoSansGujarati-Regular.ttf');
       const boldFontPath = path.join(fontsDir, 'NotoSansGujarati-Bold.ttf');
@@ -48,15 +48,13 @@ export function generateFeeReceiptPdf(data: FeeReceiptPdfData): Promise<Buffer> 
 
       if (hasReg) {
         doc.registerFont('GujaratiFont', regFontPath);
-      } else {
-        doc.font('Helvetica');
       }
-
       if (hasBold) {
         doc.registerFont('GujaratiBoldFont', boldFontPath);
-      } else {
-        doc.font('Helvetica-Bold');
       }
+
+      // Add First Page AFTER registering custom fonts
+      doc.addPage();
 
       const fontReg = hasReg ? 'GujaratiFont' : 'Helvetica';
       const fontBold = hasBold ? 'GujaratiBoldFont' : 'Helvetica-Bold';
