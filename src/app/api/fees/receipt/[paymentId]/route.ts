@@ -12,6 +12,9 @@ import { ensureReceiptNumber } from '@/lib/receiptNumber';
 import { numberToWordsIndian } from '@/lib/numberToWords';
 import { FeeReceiptDocument } from '@/components/pdf/FeeReceiptDocument';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // Prevent Webpack tree-shaking of Mongoose models required for .populate()
 const _registeredModels = [Student, FeePayment, User];
 void _registeredModels;

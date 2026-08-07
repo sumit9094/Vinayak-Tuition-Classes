@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { renderToBuffer, Document, Page, Text } from '@react-pdf/renderer';
 import React from 'react';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const pdfElement = (
