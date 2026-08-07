@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
+import { renderToBuffer } from '@react-pdf/renderer';
 import { getSession } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import FeePayment from '@/models/FeePayment';
@@ -37,9 +38,6 @@ export async function GET(
   { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
-    process.env.OVERRIDE_REACT_PDF_RECONCILER_REACT_VERSION = '18.2.0';
-    const { renderToBuffer } = await import('@react-pdf/renderer');
-
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized — Please login again' }, { status: 401 });
