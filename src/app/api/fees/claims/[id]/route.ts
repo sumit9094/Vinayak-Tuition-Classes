@@ -3,9 +3,14 @@ import mongoose from 'mongoose';
 import { connectDB } from '@/lib/mongodb';
 import PaymentClaim from '@/models/PaymentClaim';
 import FeePayment from '@/models/FeePayment';
+import Student from '@/models/Student';
 import User from '@/models/User';
 import { sendPushToUser } from '@/lib/sendPushNotification';
 import { ensureReceiptNumber } from '@/lib/receiptNumber';
+
+// Prevent Webpack tree-shaking of Mongoose models required for .populate()
+const _registeredModels = [Student, FeePayment, PaymentClaim, User];
+void _registeredModels;
 
 export async function PUT(
   req: NextRequest,

@@ -3,6 +3,10 @@ import { connectDB } from '@/lib/mongodb';
 import PaymentClaim from '@/models/PaymentClaim';
 import Student from '@/models/Student';
 
+// Prevent Webpack tree-shaking of Mongoose models required for .populate()
+const _registeredModels = [Student, PaymentClaim];
+void _registeredModels;
+
 export async function GET(req: NextRequest) {
   try {
     await connectDB();

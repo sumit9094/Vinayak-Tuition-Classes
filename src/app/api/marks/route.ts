@@ -5,6 +5,10 @@ import TestMark from '@/models/TestMark';
 import Student from '@/models/Student';
 import { sendPushToUser } from '@/lib/sendPushNotification';
 
+// Prevent Webpack tree-shaking of Mongoose models required for .populate()
+const _registeredModels = [Student, TestMark];
+void _registeredModels;
+
 // POST: Add test mark for a student
 export async function POST(req: Request) {
   try {

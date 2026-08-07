@@ -8,9 +8,14 @@ import { getSession } from '@/lib/auth';
 import { connectDB } from '@/lib/mongodb';
 import FeePayment from '@/models/FeePayment';
 import Student from '@/models/Student';
+import User from '@/models/User';
 import { ensureReceiptNumber } from '@/lib/receiptNumber';
 import { numberToWordsIndian } from '@/lib/numberToWords';
 import { FeeReceiptDocument } from '@/components/pdf/FeeReceiptDocument';
+
+// Prevent Webpack tree-shaking of Mongoose models required for .populate()
+const _registeredModels = [Student, FeePayment, User];
+void _registeredModels;
 
 function getBase64DataUri(relativePath: string): string | undefined {
   try {
