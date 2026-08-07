@@ -14,6 +14,7 @@ const withPWA = withPWAInit({
 const nextConfig = {
   reactStrictMode: true,
   turbopack: {},
+  serverExternalPackages: ['pdfkit'],
   outputFileTracingIncludes: {
     '/api/**/*': ['./node_modules/pdfkit/js/data/**/*', './public/**/*'],
   },
