@@ -4,16 +4,14 @@ import React from 'react';
 
 export async function GET(req: NextRequest) {
   try {
-    const doc = React.createElement(
-      Document,
-      null,
-      React.createElement(
-        Page,
-        null,
-        React.createElement(Text, null, 'Minimal Test PDF - Vinayak Tuition')
-      )
+    const pdfElement = (
+      <Document>
+        <Page>
+          <Text>Minimal Test PDF - Vinayak Tuition</Text>
+        </Page>
+      </Document>
     );
-    const pdfBuffer = await renderToBuffer(doc as any);
+    const pdfBuffer = await renderToBuffer(pdfElement);
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         'Content-Type': 'application/pdf',
