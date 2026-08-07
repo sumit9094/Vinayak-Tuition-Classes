@@ -13,6 +13,9 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    OVERRIDE_REACT_PDF_RECONCILER_REACT_VERSION: '18.2.0',
+  },
   outputFileTracingIncludes: {
     '/api/fees/receipt/[paymentId]': ['./public/**/*', './src/fonts/**/*'],
   },
