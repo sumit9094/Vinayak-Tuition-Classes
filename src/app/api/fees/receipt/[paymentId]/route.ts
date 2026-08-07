@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
+import mongoose from 'mongoose';
 import { renderToBuffer } from '@react-pdf/renderer';
 import React from 'react';
 import { getSession } from '@/lib/auth';
@@ -37,6 +38,10 @@ export async function GET(
 
     await connectDB();
     const { paymentId } = await params;
+
+    if (!paymentId || !mongoose.Types.ObjectId.isValid(paymentId)) {
+      return NextResponse.json({ error: 'Invalid payment ID format' }, { status: 400 });
+    }
 
     const payment = await FeePayment.findById(paymentId).populate('studentId');
     if (!payment || !payment.studentId) {

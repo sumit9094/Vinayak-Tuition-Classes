@@ -13,6 +13,9 @@ const withPWA = withPWAInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  outputFileTracingIncludes: {
+    '/api/fees/receipt/[paymentId]': ['./public/**/*', './src/fonts/**/*'],
+  },
 };
 
 export default withPWA(nextConfig);

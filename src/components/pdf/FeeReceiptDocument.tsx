@@ -1,20 +1,35 @@
 import React from 'react';
 import { Document, Page, Text, View, Image, Font, StyleSheet } from '@react-pdf/renderer';
+import path from 'path';
+import fs from 'fs';
 
-// Register Gujarati TTF fonts with high-reliability Google Fonts CDN URLs
-// This ensures font rendering never fails on Vercel Serverless Functions
+// Hybrid Font Registration:
+// Uses local disk TTF files bundled via outputFileTracingIncludes for zero-latency rendering.
+// Falls back to Google Fonts CDN URLs if local file is unavailable.
+const publicDir = path.join(process.cwd(), 'public');
+const fontsDir = path.join(publicDir, 'fonts');
+const regFontPath = path.join(fontsDir, 'NotoSansGujarati-Regular.ttf');
+const boldFontPath = path.join(fontsDir, 'NotoSansGujarati-Bold.ttf');
+
+const regExists = fs.existsSync(regFontPath);
+const boldExists = fs.existsSync(boldFontPath);
+
 const gujaratiRegularUrl =
   'https://fonts.gstatic.com/s/notosansgujarati/v27/wlpWgx_HC1ti5ViekvcxnhMlCVo3f5pv17ivlzsUB14gg1TMR2Gw4VceEl7MA_ypFwPM_OdiEUUv.ttf';
 const gujaratiBoldUrl =
   'https://fonts.gstatic.com/s/notosansgujarati/v27/wlpWgx_HC1ti5ViekvcxnhMlCVo3f5pv17ivlzsUB14gg1TMR2Gw4VceEl7MA_xOEAPM_OdiEUUv.ttf';
 
-Font.register({
-  family: 'NotoSansGujarati',
-  fonts: [
-    { src: gujaratiRegularUrl, fontWeight: 'normal' },
-    { src: gujaratiBoldUrl, fontWeight: 'bold' },
-  ],
-});
+try {
+  Font.register({
+    family: 'NotoSansGujarati',
+    fonts: [
+      { src: regExists ? regFontPath : gujaratiRegularUrl, fontWeight: 'normal' },
+      { src: boldExists ? boldFontPath : gujaratiBoldUrl, fontWeight: 'bold' },
+    ],
+  });
+} catch (err) {
+  console.error('Font registration warning:', err);
+}
 
 // Disable automatic hyphenation for clean Gujarati & English word rendering
 Font.registerHyphenationCallback((word) => [word]);
