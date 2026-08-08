@@ -47,8 +47,9 @@ self.addEventListener('push', (event: any) => {
     body,
     icon: iconUrl,
     badge: badgeUrl,
-    vibrate: [200, 100, 200],
+    vibrate: [300, 100, 300, 100, 300],
     tag: 'vtc-' + Date.now(),
+    timestamp: Date.now(),
     data: {
       url
     }
