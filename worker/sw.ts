@@ -35,11 +35,11 @@ self.addEventListener('push', (event: any) => {
 
   const options = {
     body,
-    icon: '/badge.png',
-    badge: '/badge.png',
+    icon: new URL('/logo.png', self.location.origin).href,
+    badge: new URL('/badge.png', self.location.origin).href,
     vibrate: [200, 100, 200],
-    tag: 'vtc-notification-' + Date.now(),
-    requireInteraction: true,
+    tag: 'vtc-notification',
+    renotify: true,
     data: {
       url
     }

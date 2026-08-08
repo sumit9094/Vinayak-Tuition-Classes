@@ -56,9 +56,11 @@ export async function sendPushToUser(
         const result = await webPush.sendNotification(pushSubscription, jsonPayload, {
           TTL: 86400, // 24 hours
           urgency: 'high',
+          topic: 'vtc-alert',
           contentEncoding: 'aes128gcm',
           headers: {
-            'Urgency': 'high'
+            'Urgency': 'high',
+            'Topic': 'vtc-alert'
           }
         });
         console.log(`[Push Notification] Success! Deployed to endpoint: ${sub.endpoint}. Status: ${result.statusCode}`);
