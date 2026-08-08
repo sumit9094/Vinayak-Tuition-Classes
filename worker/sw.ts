@@ -33,10 +33,20 @@ self.addEventListener('push', (event: any) => {
     }
   }
 
-  const options = {
+  let iconUrl = 'https://vinayak-tuition.vercel.app/logo.png';
+  let badgeUrl = 'https://vinayak-tuition.vercel.app/badge.png';
+
+  try {
+    if (self.location?.origin) {
+      iconUrl = new URL('/logo.png', self.location.origin).href;
+      badgeUrl = new URL('/badge.png', self.location.origin).href;
+    }
+  } catch (e) {}
+
+  const options: any = {
     body,
-    icon: new URL('/logo.png', self.location.origin).href,
-    badge: new URL('/badge.png', self.location.origin).href,
+    icon: iconUrl,
+    badge: badgeUrl,
     vibrate: [200, 100, 200],
     tag: 'vtc-notification',
     renotify: true,

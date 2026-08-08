@@ -5,6 +5,8 @@ import { Bell, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 
+const DEFAULT_VAPID_PUBLIC_KEY = 'BMoGwGL1vbYPUVtZJuua1j0UISy8hFs3B_z24EFw16DBiUjeFFyGPyp77PyHAu9cDCJu2CADw7CmPdzmP-3yC1U';
+
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -78,7 +80,7 @@ export default function NotificationOptIn() {
 
       // If no subscription exists, create one using our VAPID public key
       if (!subscription) {
-        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+        const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY;
         if (!vapidPublicKey) {
           console.error('VAPID public key is missing.');
           return;
@@ -104,7 +106,7 @@ export default function NotificationOptIn() {
 
   // Directly call subscribe inside the synchronous event execution path of a user gesture
   const subscribeDirectly = (registration: ServiceWorkerRegistration) => {
-    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY;
     if (!vapidPublicKey) {
       console.error('VAPID public key is missing.');
       return;

@@ -2,19 +2,19 @@ import webPush from 'web-push';
 import PushSubscription from '@/models/PushSubscription';
 import { connectDB } from './mongodb';
 
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
-const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:vinayaktuitionclasses76@gmail.com';
+const DEFAULT_VAPID_PUBLIC_KEY = 'BMoGwGL1vbYPUVtZJuua1j0UISy8hFs3B_z24EFw16DBiUjeFFyGPyp77PyHAu9cDCJu2CADw7CmPdzmP-3yC1U';
+const DEFAULT_VAPID_PRIVATE_KEY = 'uAaqDiduSpvnFa-sZxfFkBmtUIb3oTycsjLj0NZEaOE';
+const DEFAULT_VAPID_SUBJECT = 'mailto:vinayaktuitionclasses76@gmail.com';
 
-if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
-  webPush.setVapidDetails(
-    VAPID_SUBJECT,
-    VAPID_PUBLIC_KEY,
-    VAPID_PRIVATE_KEY
-  );
-} else {
-  console.warn('VAPID keys not configured. Push notifications will be disabled.');
-}
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || DEFAULT_VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || DEFAULT_VAPID_PRIVATE_KEY;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || DEFAULT_VAPID_SUBJECT;
+
+webPush.setVapidDetails(
+  VAPID_SUBJECT,
+  VAPID_PUBLIC_KEY,
+  VAPID_PRIVATE_KEY
+);
 
 interface PushPayload {
   title: string;
