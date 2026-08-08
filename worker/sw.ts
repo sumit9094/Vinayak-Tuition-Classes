@@ -48,8 +48,7 @@ self.addEventListener('push', (event: any) => {
     icon: iconUrl,
     badge: badgeUrl,
     vibrate: [200, 100, 200],
-    tag: 'vtc-notification',
-    renotify: true,
+    tag: 'vtc-' + Date.now(),
     data: {
       url
     }
