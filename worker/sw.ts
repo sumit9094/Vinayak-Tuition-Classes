@@ -16,29 +16,38 @@ precacheAndRoute(self.__WB_MANIFEST || []);
 
 // Listen for push events
 self.addEventListener('push', (event: any) => {
-  if (!event.data) return;
+  let title = 'Vinayak Tuition Classes';
+  let body = '';
+  let url = '/';
 
-  try {
-    const data = event.data.json();
-    const title = data.title || 'Vinayak Tuition Classes';
-    const options = {
-      body: data.body || '',
-      icon: '/notification-icon.png',
-      badge: '/badge.png',
-      vibrate: [200, 100, 200],
-      tag: 'vtc-notification-' + Date.now(),
-      requireInteraction: true,
-      data: {
-        url: data.url || '/'
-      }
-    };
-
-    event.waitUntil(
-      self.registration.showNotification(title, options)
-    );
-  } catch (err) {
-    console.error('Error handling push event:', err);
+  if (event?.data) {
+    try {
+      const data = event.data.json();
+      title = data.title || title;
+      body = data.body || body;
+      url = data.url || url;
+    } catch (err) {
+      try {
+        body = event.data.text();
+      } catch (e) {}
+    }
   }
+
+  const options = {
+    body,
+    icon: '/badge.png',
+    badge: '/badge.png',
+    vibrate: [200, 100, 200],
+    tag: 'vtc-notification-' + Date.now(),
+    requireInteraction: true,
+    data: {
+      url
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
 // Handle notification click events
