@@ -151,7 +151,6 @@ function AdminDashboardContent() {
   const [reviewsPending, setReviewsPending] = useState<any[]>([]);
   const [reviewsApproved, setReviewsApproved] = useState<any[]>([]);
   const [fees, setFees] = useState<any[]>([]);
-  const [pendingClaims, setPendingClaims] = useState<any[]>([]);
   const [selectedStudentForMarks, setSelectedStudentForMarks] = useState<any | null>(null);
 
   // Gallery Management states
@@ -656,50 +655,11 @@ function AdminDashboardContent() {
   });
   const [formSubmitting, setFormSubmitting] = useState(false);
 
-  const fetchPendingClaims = async () => {
-    try {
-      const res = await fetch('/api/fees/claims?status=pending');
-      if (res.ok) {
-        const data = await res.json();
-        setPendingClaims(data.claims || []);
-      }
-    } catch (e) {
-      console.error('Fetch pending claims error:', e);
-    }
-  };
-
-  const handleResolveClaim = async (claimId: string, action: 'confirm' | 'reject') => {
-    try {
-      const res = await fetch(`/api/fees/claims/${claimId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, adminId: (user as any)?._id || (user as any)?.id }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showSuccess(data.message);
-        fetchPendingClaims();
-        // Refresh fees list
-        const feesRes = await fetch('/api/fees');
-        if (feesRes.ok) {
-          const feesData = await feesRes.json();
-          setFees(feesData.fees || []);
-        }
-      } else {
-        alert(data.error || 'Failed to resolve claim.');
-      }
-    } catch (e) {
-      console.error('Resolve claim error:', e);
-      alert('Network error while resolving claim.');
-    }
-  };
-
   // Fetch initial collections
   const fetchData = async () => {
     setLoading(true);
     setErrorMsg(null);
     try {
-      fetchPendingClaims();
       // 1. Fetch Students
       const studentsRes = await fetch('/api/students');
       // 2. Fetch Teachers

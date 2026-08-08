@@ -90,13 +90,6 @@ function StudentDashboardContent() {
   const [cleanUpiId, setCleanUpiId] = useState<string>('');
   const [cleanPayeeName, setCleanPayeeName] = useState<string>('');
 
-  // Payment Claims states
-  const [paymentClaims, setPaymentClaims] = useState<any[]>([]);
-  const [showClaimModal, setShowClaimModal] = useState<boolean>(false);
-  const [claimTxnId, setClaimTxnId] = useState<string>('');
-  const [claimTargetMonth, setClaimTargetMonth] = useState<string>('');
-  const [claimTargetAmount, setClaimTargetAmount] = useState<number>(0);
-
   // Payment Notification States & Rate Limiting Cooldown
   const [notifyingPayment, setNotifyingPayment] = useState<boolean>(false);
   const [notifySuccessMsg, setNotifySuccessMsg] = useState<string | null>(null);
@@ -135,70 +128,6 @@ function StudentDashboardContent() {
     }
   };
 
-  const handleOpenClaimModal = (monthYear?: string, amount?: number) => {
-    const firstUnpaid = feesBreakdown.find((b: any) => !b.paid);
-    const targetMonth = monthYear || firstUnpaid?.monthYear || '';
-    const targetAmount = amount || firstUnpaid?.amount || totalPendingFees;
-
-    setClaimTargetMonth(targetMonth);
-    setClaimTargetAmount(targetAmount);
-    setClaimTxnId('');
-    setNotifySuccessMsg(null);
-    setShowClaimModal(true);
-  };
-
-  const handleSubmitPaymentClaim = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const studentIdStr = (user as any)?.id || (user as any)?._id || '';
-
-    if (!claimTxnId || claimTxnId.trim().length < 6) {
-      setNotifySuccessMsg(
-        language === 'EN'
-          ? 'Please enter a valid UPI Transaction ID / UTR Number (min 6 characters).'
-          : 'કૃપા કરીને માન્ય UPI Transaction ID / UTR નંબર (ઓછામાં ઓછા ૬ અક્ષર) દાખલ કરો.'
-      );
-      return;
-    }
-
-    setNotifyingPayment(true);
-    setNotifySuccessMsg(null);
-
-    try {
-      const res = await fetch('/api/fees/notify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          studentId: studentIdStr,
-          studentName: user?.name || 'Student',
-          amount: claimTargetAmount,
-          monthYear: claimTargetMonth,
-          transactionId: claimTxnId.trim(),
-          standard: (user as any)?.standard || '',
-          branch: (user as any)?.branch || '',
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setNotifySuccessMsg(
-          language === 'EN'
-            ? `Thanks! Payment claim with UTR ${claimTxnId.trim()} submitted — awaiting admin confirmation.`
-            : `આભાર! UTR નંબર ${claimTxnId.trim()} સાથે પેમેન્ટ ક્લેમ સબમિટ થઈ ગયો છે — એડમિન ચકાસણીની રાહમાં છે.`
-        );
-        setClaimTxnId('');
-        setShowClaimModal(false);
-        fetchFeesAndClaims();
-      } else {
-        setNotifySuccessMsg(data.error || 'Failed to submit payment claim.');
-      }
-    } catch (e) {
-      console.error(e);
-      setNotifySuccessMsg('Network error. Failed to submit claim.');
-    } finally {
-      setNotifyingPayment(false);
-    }
-  };
 
   // Mobile Hardware Back-Button Listener for Pay Modal
   useEffect(() => {
@@ -323,15 +252,11 @@ function StudentDashboardContent() {
     fetchSubjectData();
   }, [selectedSubject, user]);
 
-  // Fetch fees breakdown & payment claims when student profile loads
-  const fetchFeesAndClaims = async () => {
+  // Fetch fees breakdown when student profile loads
+  const fetchFees = async () => {
     if (!user?._id) return;
     try {
-      const [feesRes, claimsRes] = await Promise.all([
-        fetch(`/api/fees/${user._id}`),
-        fetch(`/api/fees/claims?studentId=${user._id}`),
-      ]);
-
+      const feesRes = await fetch(`/api/fees/${user._id}`);
       if (feesRes.ok) {
         const data = await feesRes.json();
         setFeesBreakdown(data.breakdown || []);
@@ -340,18 +265,13 @@ function StudentDashboardContent() {
           .reduce((sum: number, b: any) => sum + b.amount, 0);
         setTotalPendingFees(pendingTotal);
       }
-
-      if (claimsRes.ok) {
-        const claimsData = await claimsRes.json();
-        setPaymentClaims(claimsData.claims || []);
-      }
     } catch (e) {
-      console.error('Fetch student fees/claims error:', e);
+      console.error('Fetch student fees error:', e);
     }
   };
 
   useEffect(() => {
-    fetchFeesAndClaims();
+    fetchFees();
   }, [user]);
 
   // Fetch UPI Settings
@@ -777,9 +697,6 @@ function StudentDashboardContent() {
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                     {feesBreakdown.map((item) => {
-                      const pendingClaim = paymentClaims.find((c: any) => c.monthYear === item.monthYear && c.status === 'pending');
-                      const rejectedClaim = paymentClaims.find((c: any) => c.monthYear === item.monthYear && c.status === 'rejected');
-
                       return (
                         <tr key={item.monthYear} className="text-xs">
                           <td className="py-3.5 px-4 font-bold text-slate-900 dark:text-slate-200">
@@ -821,29 +738,11 @@ function StudentDashboardContent() {
                                   </button>
                                 )}
                               </div>
-                            ) : pendingClaim ? (
-                              <div className="flex flex-col items-end gap-1">
-                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                                  <Clock className="w-3 h-3 animate-pulse" />
-                                  <span>Claim Pending</span>
-                                </span>
-                                <span className="text-[9px] font-mono text-slate-400">
-                                  UTR: {pendingClaim.transactionId}
-                                </span>
-                              </div>
                             ) : (
-                              <div className="flex flex-col items-end gap-1.5">
-                                <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">
-                                  <AlertCircle className="w-3 h-3" />
-                                  <span>Pending</span>
-                                </span>
-                                <button
-                                  onClick={() => handleOpenClaimModal(item.monthYear, item.amount)}
-                                  className="px-2.5 py-1 rounded-lg bg-[#8B5CF6]/10 text-[#8B5CF6] hover:bg-[#8B5CF6]/20 border border-[#8B5CF6]/20 text-[10px] font-black transition-all cursor-pointer"
-                                >
-                                  {rejectedClaim ? 'Resubmit Claim' : "I've Paid"}
-                                </button>
-                              </div>
+                              <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>Pending</span>
+                              </span>
                             )}
                           </td>
                         </tr>
